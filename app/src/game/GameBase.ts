@@ -3,7 +3,7 @@ import { Controller, Key } from "./Controller";
 
 export class GameBase {
 
-  private controller!: Controller;
+  private controller: Controller | null = null;
 
   /**
    * Preloads assets
@@ -26,16 +26,16 @@ export class GameBase {
 
     bunny.anchor.set(0.5);
     bunny.x = app.screen.width / 2;
-    bunny.y = app.screen.height / 2;
+    bunny.y = app.screen.height / 3;
 
     app.ticker.add((time) => {
-      // bunny.rotation += 0.1 * time.deltaTime;
+      bunny.rotation += 0.1 * time.deltaTime;
 
       // for every Key values change bunny position
       Object.values(Key).filter(v => typeof v === "number").forEach( keyVal => {
         const key = keyVal as Key;
 
-        if (this.controller.keys[key].pressed) {
+        if (this.controller?.keys[key].pressed) {
           switch (key) {
             case Key.UP:
               bunny.y -= 5 * time.deltaTime;
@@ -55,5 +55,10 @@ export class GameBase {
 
 
     });
+  }
+
+  stop(){
+    this.controller?.destructor();
+    this.controller = null;
   }
 }

@@ -58,4 +58,9 @@ export class Controller {
       key.pressed = false;
   }
 
+  destructor(){
+    window.removeEventListener("keydown", (event) => this.keydownHandler(event));
+    window.removeEventListener("keyup", (event) => this.keyupHandler(event));
+  }
+
 }
