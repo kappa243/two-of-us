@@ -10,35 +10,40 @@ const options: Partial<ApplicationOptions> = {
 
 const Game = () => {
   const canvasParentRef = useRef<HTMLDivElement>(null);
-  const app = useRef<Application<Renderer> | null>(null);
-  const game = useRef<GameBase | null>(null);
+  const appRef = useRef<Application<Renderer> | null>(null);
+  const gameRef = useRef<GameBase | null>(null);
 
   useEffect(() => {
-    const canvasParentRefCopy = canvasParentRef.current;
-    (async () => {
-      app.current = new Application();
-      game.current = new GameBase();
-
+    const canvasParent = canvasParentRef.current;
+    
+    const app = new Application();
+    const game = new GameBase(app);
+    appRef.current = app;
+    gameRef.current = game;
+    
+    const runtime = (async () => {
       if (!canvasParentRef.current) {
-        throw new Error("Canvas parent ref is null");
+        throw new Error("Canvas parent is undefined");
       }
-  
-      await app.current?.init({ resizeTo: canvasParentRef.current, ...options });
-  
-      if (app.current?.renderer.canvas === undefined) {
+      
+      await app?.init({ resizeTo: canvasParentRef.current, ...options });
+      
+      if (app?.renderer.canvas === undefined) {
         throw new Error("Canvas is undefined (renderer init probably failed)");
       }
-  
-      canvasParentRef.current.appendChild(app.current.canvas);
-      await game.current?.run(app.current);
       
+      canvasParentRef.current.appendChild(app.canvas);
+
+      await game?.run(app);
+            
     })();
 
     return () => {
-      if (canvasParentRefCopy) canvasParentRefCopy.textContent = "";
-
-      if (game.current) game.current.stop();
-      if (app.current?.renderer) app.current.stop();
+      runtime.then(() => {
+        canvasParent?.removeChild(app.canvas);
+        game?.stop();
+        app?.stop();
+      });
     };
   }, []);
 

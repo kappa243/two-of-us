@@ -1,9 +1,16 @@
-import { Application, Assets, Sprite } from "pixi.js";
+import { Application, Assets } from "pixi.js";
+import { Camera } from "./Camera";
 import { Controller, Key } from "./Controller";
+import { FollowableBunny } from "./FollowableBunny";
 
 export class GameBase {
 
+  private app: Application;
   private controller: Controller | null = null;
+
+  private camera!: Camera;
+
+  private _lock: boolean = false;
 
   /**
    * Preloads assets
@@ -16,19 +23,34 @@ export class GameBase {
     await Assets.load(assets);
   }
 
-  async run(app: Application) {
+  constructor(app: Application) {
+    this.app = app;
+  }
+
+  async run(a: any) {
     await this.preload();
+    console.log(a);
 
     this.controller = new Controller();
+    this.camera = new Camera(this.app);
 
-    const bunny = Sprite.from("bunny");
-    app.stage.addChild(bunny);
+    const firstBunny = new FollowableBunny(this.app.screen.width / 2, this.app.screen.height / 2);
+    const secondBunny = new FollowableBunny(25, 25);
 
-    bunny.anchor.set(0.5);
-    bunny.x = app.screen.width / 2;
-    bunny.y = app.screen.height / 3;
+    firstBunny.addToContainer(this.camera.container);
+    secondBunny.addToContainer(this.camera.container);
 
-    app.ticker.add((time) => {
+    firstBunny.position.x = this.app.screen.width / 2;
+    firstBunny.position.y = this.app.screen.height / 2;
+    
+    this.camera.setPosition(0, 0);
+
+    this.camera.follow(firstBunny);
+
+    this.app.ticker.add((time) => {
+
+      const bunny = this.camera.followedObject as FollowableBunny;
+
       bunny.rotation += 0.1 * time.deltaTime;
 
       // for every Key values change bunny position
@@ -49,7 +71,17 @@ export class GameBase {
             case Key.RIGHT:
               bunny.x += 5 * time.deltaTime;
               break;
+            case Key.Q:
+              // swap following bunny
+              if (!this._lock){
+                this.camera.follow(this.camera.followedObject === firstBunny ? secondBunny : firstBunny);
+                this._lock = true;
+              }
           }
+        }
+
+        if (key === Key.Q && this.controller?.keys[key].pressed === false && this._lock) {
+          this._lock = false;
         }
       });
 
