@@ -5,6 +5,7 @@ import { Application, ApplicationOptions, Renderer } from "pixi.js";
 import { useEffect, useRef } from "react";
 
 const options: Partial<ApplicationOptions> = {
+  preference: "webgl",
   background: "#1099bb"
 };
 

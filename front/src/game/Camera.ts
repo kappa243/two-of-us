@@ -10,6 +10,7 @@ export class Camera implements IFollower<Point> {
    * Camera aware container
    */
   readonly container: Container;
+  readonly filterContainer: Container;
 
   private _followedObject: IFollowable<Point> | null = null;
 
@@ -17,12 +18,16 @@ export class Camera implements IFollower<Point> {
   constructor(app: Application) {
     this.app = app;
 
+    this.filterContainer = new Container();
+
     // create container that camera will be relative to
     this.container = new Container();
 
     // add camera to stage 
-    console.log("adding container", this.app);
-    this.app.stage.addChild(this.container);
+    this.app.stage.addChild(this.filterContainer);
+    // this.app.stage.addChild(this.container);
+    this.filterContainer.addChild(this.container);
+
   }
 
   private init() {

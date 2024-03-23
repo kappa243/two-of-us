@@ -81,5 +81,9 @@ export class FollowableBunny implements IFollowable<Point> {
   removeFromContainer(container: Container) {
     container.removeChild(this.bunny);
   }
+
+  set mask(mask: number | Container | null){
+    this.bunny.mask = mask;
+  }
   
 }
