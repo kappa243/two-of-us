@@ -3,6 +3,8 @@
 import { GameBase } from "@/game/GameBase";
 import { Application, ApplicationOptions, Renderer } from "pixi.js";
 import { useEffect, useRef } from "react";
+import * as Colyseus from "colyseus.js";
+import { Room1 } from "";
 
 const options: Partial<ApplicationOptions> = {
   background: "#1099bb"
@@ -20,6 +22,8 @@ const Game = () => {
     const game = new GameBase(app);
     appRef.current = app;
     gameRef.current = game;
+
+    let client2 = new Colyseus.Client('ws://localhost:2567');
     
     const runtime = (async () => {
       if (!canvasParentRef.current) {
@@ -35,6 +39,25 @@ const Game = () => {
       canvasParentRef.current.appendChild(app.canvas);
 
       await game?.run(app);
+
+      let my_room2 = await client2.joinOrCreate("my_room");
+      console.log("my_room2: ", my_room2.id);
+    
+      my_room2.onMessage("message_type2", (message: any) => {
+        console.log("message_type22!!!!", message);
+      });
+
+      my_room2.onMessage("location3001", (message: any) => {
+        console.log("location3001: ", message);
+        gameRef.current?.setSecondBunnyPosition(message.x, message.y);
+      });
+      console.log("sending message...");
+      // my_room2.send("location", { x: 1, y: 2});
+      my_room2.send("location2", {type: 'message', test: 'Hello'});
+
+      // my_room2.state.players.onAdd((player, sessionId) => {
+      //   console.log("a player has joined!");
+      // });
             
     })();
 
