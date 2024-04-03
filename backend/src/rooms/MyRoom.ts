@@ -1,5 +1,5 @@
 import { Room, Client } from "@colyseus/core";
-import { MyRoomState } from "./schema/MyRoomState";
+import { MyRoomState, Player } from "./schema/MyRoomState";
 
 export class MyRoom extends Room<MyRoomState> {
   maxClients = 4;
@@ -17,9 +17,34 @@ export class MyRoom extends Room<MyRoomState> {
     });
 
     this.onMessage("location3001", (client: any, message: any) => {
-      console.log("Message 3001 has arrived! ", message);
+      console.log("Message 3001 has arrived!", message);
+      // console.log("players: ", this.state.players);
+      let player = this.state.players.get(message.name);
+      if (player !== null) {
+        console.log("player new");
+        player.x = message.x;
+        player.y = message.y;
+      }
+      // this.state.players.forEach((value: Player) =>{
+      //   console.log("Looking for player: ", value.name, " ", message.name);
+      //   if (value.name === message.name){
+      //     console.log("Player has been found");
+      //     value.x = message.x;
+      //     value.y = message.y;
+      //   }
+      // })
       // client.send("message_type2", "message");
-      this.broadcast("location3001", message);
+      // this.broadcast("location3002", message);
+    });
+
+    this.onMessage("init", (client: any, message: any) => {
+      console.log("Message 3001 has arrived! ", message);
+      // this.state.player_names.push(message.name);
+      // let player = new Player(message.x, message.y, message.name);
+      // this.state.players.set(message.name, player);
+      // console.log("player: ", player)
+      // client.send("message_type2", "message");
+      // this.broadcast("location3001", message);
     });
 
   }
@@ -35,6 +60,8 @@ export class MyRoom extends Room<MyRoomState> {
 
   onJoin (client: Client, options: any) {
     console.log(client.sessionId, "joined!");
+    this.state.players.set(client.sessionId, new Player(client.sessionId));
+    // client.send("messate_type2", "i am back!");
   }
 
   onLeave (client: Client, consented: boolean) {

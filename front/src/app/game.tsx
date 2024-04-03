@@ -4,7 +4,7 @@ import { GameBase } from "@/game/GameBase";
 import { Application, ApplicationOptions, Renderer } from "pixi.js";
 import { useEffect, useRef } from "react";
 import * as Colyseus from "colyseus.js";
-import { Room1 } from "";
+// import { Room1 } from "";
 
 const options: Partial<ApplicationOptions> = {
   background: "#1099bb"
@@ -42,21 +42,50 @@ const Game = () => {
 
       let my_room2 = await client2.joinOrCreate("my_room");
       console.log("my_room2: ", my_room2.id);
-    
+      game.setRoom(my_room2);
+      
+      // my_room2.send("init", {name: my_room2.sessionId, x: 1, y: 1});
       my_room2.onMessage("message_type2", (message: any) => {
-        console.log("message_type22!!!!", message);
+        console.log("message_type2!!!!", message);
+        // my_room2.send("init", {name: my_room2.sessionId, x: 1, y: 1});
       });
 
-      my_room2.onMessage("location3001", (message: any) => {
-        console.log("location3001: ", message);
-        gameRef.current?.setSecondBunnyPosition(message.x, message.y);
-      });
-      console.log("sending message...");
+      // my_room2.onMessage("location3001", (message: any) => {
+        // console.log("location3001: ", message);
+        // gameRef.current?.setSecondBunnyPosition(message.x, message.y);
+      // });
+      // console.log("sending message...");
+      // my_room2.send("location2", {type: 'message', test: 'Hello'});
+
       // my_room2.send("location", { x: 1, y: 2});
-      my_room2.send("location2", {type: 'message', test: 'Hello'});
 
-      // my_room2.state.players.onAdd((player, sessionId) => {
-      //   console.log("a player has joined!");
+      my_room2.onMessage("location3002", (message: any) => {
+        console.log("location3002: ", message);
+        // gameRef.current?.setSecondBunnyPosition(message.x, message.y);
+      });
+
+      my_room2.state.players.onAdd((player: any, key:any) => {
+        console.log("a player has joined! ", player, " ", key);
+        player.listen("x", (value: number, prevoiusValue: number) => {
+          console.log("new x: ", value)
+          game.setSecondBunnyX(value);
+        })
+        player.listen("y", (value: number, previousValue: number)=>{
+          console.log("new y: ", value);
+          game.setSecondBunnyY(value);
+        })
+      }, false);
+
+      // my_room2.onStateChange.call("", (sth) =>{
+      //   console.log("ala")
+      // }); Działa
+
+      // my_room2.onStateChange.bind(()=>{
+        // console.log("ala");
+      // });
+
+      // my_room2.state.onChange( () => {
+          // console.log("State has changed!");
       // });
             
     })();
