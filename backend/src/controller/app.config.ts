@@ -1,11 +1,11 @@
 import config from "@colyseus/tools";
 import { monitor } from "@colyseus/monitor";
 import { playground } from "@colyseus/playground";
-
+import { GAME_WORLD_ROOM_NAME } from "../model/configuration";
 /**
  * Import your Room files
  */
-import { MyRoom } from "./rooms/MyRoom";
+import { GameWorldRoom } from "./rooms/GameWorldRoom";
 
 export default config({
 
@@ -13,7 +13,7 @@ export default config({
         /**
          * Define your room handlers:
          */
-        gameServer.define('my_room', MyRoom);
+        gameServer.define(GAME_WORLD_ROOM_NAME, GameWorldRoom);
 
     },
 

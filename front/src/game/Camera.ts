@@ -21,7 +21,7 @@ export class Camera implements IFollower<Point> {
     this.container = new Container();
 
     // add camera to stage 
-    console.log("adding container", this.app);
+    // console.log("adding container", this.app);
     this.app.stage.addChild(this.container);
   }
 

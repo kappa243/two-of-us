@@ -1,31 +1,43 @@
 import { Application, Assets } from "pixi.js";
 import { Camera } from "./Camera";
 import { Controller, Key } from "./Controller";
-import { FollowableBunny } from "./FollowableBunny";
-import { FollowableChicken } from "./FollowableChicken";
 import { Room } from "colyseus.js";
+import { Player } from "../game/Player";
+import { PLAYER_SPEED } from "./config";
+import { FollowableCharacter } from "./FollowableCharacter";
+
+export enum InputType {
+  UP = 0,
+  DOWN,
+  RIGHT,
+  LEFT
+};
 
 export class GameBase {
 
   private app: Application;
   private controller: Controller | null = null;
-  private room: Room | null = null;
 
   private camera!: Camera;
+  private room: Room | null = null;
 
   private _lock: boolean = false;
-  private firstBunny?: FollowableBunny;
-  private secondBunny?: FollowableChicken;
+  // private ala = 0;
 
-  private secondBunnyData: number[] = [0,0];
+  private players: Map<string,Player> = new Map();
+  // private firstBunny?: FollowableBunny;
+  // private secondBunny?: FollowableChicken;
+
+  // private secondBunnyData: number[] = [0,0];
 
   /**
    * Preloads assets
    */
-  private async preload() {
+  async preload() {
     const assets = [
       { alias: "bunny", src: "https://pixijs.com/assets/bunny.png" },
-      { alias: "chicken", src: "https://pixijs.com/assets/eggHead.png" }
+      { alias: "eggHead", src: "https://pixijs.com/assets/eggHead.png" },
+      { alias: 'flowerTop', src: 'https://pixijs.com/assets/flowerTop.png' }
     ];
 
     await Assets.load(assets);
@@ -33,63 +45,84 @@ export class GameBase {
 
   constructor(app: Application) {
     this.app = app;
-  }
-
-  setSecondBunnyPosition(x: number, y: number){
-    this.secondBunny!.x = x;
-    this.secondBunny!.y = y;
-  }
-
-  setSecondBunnyX(x: number){
-    this.secondBunnyData[0] = x;
-  }
-
-  setSecondBunnyY(y: number){
-    this.secondBunnyData[1] = y;
-  }
-
-  setRoom(room: Room){
-    this.room = room;
-  }
-
-  step(percentage: number, min: number, max: number){
-      let ratio = (percentage - min) / (max - min);
-      return ratio * ratio * (3 - 2 * ratio);
-  }
-
-  interpolation(current: number, future: number, percentage: number){
-    return (future - current) * this.step(percentage, 0,1) + current;
-  }
-
-  async run(a: any) {
-    await this.preload();
-    console.log(a);
-
     this.controller = new Controller();
     this.camera = new Camera(this.app);
-    this.firstBunny = new FollowableBunny(this.app.screen.width / 2, this.app.screen.height / 2);
-    this.secondBunny = new FollowableChicken(25, 25);
-    this.firstBunny?.addToContainer(this.camera.container);
-    this.secondBunny.addToContainer(this.camera.container);
-    
-    this.firstBunny!.position.x = this.app.screen.width / 2;
-    this.firstBunny!.position.y = this.app.screen.height / 2;
-    
-    this.camera.setPosition(0, 0);
+  }
 
-    this.camera.follow(this.firstBunny!);
+  addPlayer(player: Player){
+    this.players.set(player.getSessionId(), player);
+    // console.log("amount of players: ", this.players.size);
+    this.players.get(player.getSessionId())?.setFollowable(this.camera);
+    if(this.room!.sessionId === player.getSessionId()){
+      this.camera.follow(player.followable!);
+    }
+    // this.players.forEach( (player) => {
+    //       player.setFollowable(this.camera);
+    // });
+  }
+
+  // setSecondBunnyPosition(position: [number]){
+  //   this.secondBunnyData[0] = position.at(0)!;
+  //   this.secondBunnyData[1] = position.at(1)!;
+  // }
+
+  // setSecondBunnyX(x: number){
+  //   this.secondBunnyData[0] = x;
+  // }
+
+  // setSecondBunnyY(y: number){
+  //   this.secondBunnyData[1] = y;
+  // }
+
+  setRoom(room: Room){
+    // if(this.room !== null){
+      // console.log("room not null");
+    // }
+    this.room = room;
+    // console.log("room sessionId: ", this.room.sessionId);
+  }
+
+
+  async run(a: any) {
+    // await this.preload();
+    // console.log(a);
+
+    // this.players.forEach( (player) => {
+    //   // console.log("player: ", player);
+    //   // if( player.getSessionId() === this.room?.sessionId)
+    //       player.setFollowable(this.camera);
+    // });
+
+    // this.firstBunny = new FollowableBunny(this.app.screen.width / 2, this.app.screen.height / 2);
+    // this.secondBunny = new FollowableChicken(25, 25);
+    // this.firstBunny?.addToContainer(this.camera.container);
+    // this.secondBunny.addToContainer(this.camera.container);
+    
+    // this.firstBunny!.position.x = this.app.screen.width / 2;
+    // this.firstBunny!.position.y = this.app.screen.height / 2;
+    
+    // this.camera.setPosition(0, 0);
+    // this.camera.follow(this.firstBunny!);
 
     this.app.ticker.add((time) => {
 
-      const bunny = this.camera.followedObject as FollowableBunny;
+      // const bunny = this.camera.followedObject as FollowableBunny;
 
-      bunny.rotation += 0.1 * time.deltaTime;
-      // console.log("secondX: ", this.secondBunny!.x )
-      this.secondBunny!.x = this.interpolation(this.secondBunny!.x, this.secondBunnyData[0], 0.25);
-      this.secondBunny!.y = this.interpolation(this.secondBunny!.y, this.secondBunnyData[1], 0.25);
+      // bunny.rotation += 0.1 * time.deltaTime;
+      this.players.forEach( (player) => {
+        // console.log("player: ", player.getSessionId(), " ", player.getPositionX());
+        if(player.getSessionId() !== this.room!.sessionId){
+          player.interpolate(0.25);
+          player.followable!.x = player.getPositionX();
+          player.followable!.y = player.getPositionY();
+        }
+      });
 
-      // this.secondBunny!.x = this.quadratic(this.secondBunny!.x, this.secondBunnyData[0], 0.2, 0.5);
-      // this.secondBunny!.y = this.quadratic(this.secondBunny!.y, this.secondBunnyData[1], 0.2, 0.5);
+      let local_player = this.camera.followedObject as FollowableCharacter; //this.players.get(this.room!.sessionId);
+      // let local_player_pos = local_player?.getPosition();
+
+      // this.secondBunny!.x = this.interpolation(this.secondBunny!.x, this.secondBunnyData[0], 0.25);
+      // this.secondBunny!.y = this.interpolation(this.secondBunny!.y, this.secondBunnyData[1], 0.25);
 
       // for every Key values change bunny position
       Object.values(Key).filter(v => typeof v === "number").forEach( keyVal => {
@@ -98,36 +131,50 @@ export class GameBase {
         if (this.controller?.keys[key].pressed) {
           switch (key) {
             case Key.UP:
-              bunny.y -= 5 * time.deltaTime;
+              // console.log("UP and sessionId: ", this.room!.sessionId);
+              // this.room?.send("movementInput", InputType.UP);
+              // local_player_pos![1] -= PLAYER_SPEED * time.deltaTime;
+              // local_player?.setPosition(local_player_pos!);
+              local_player.y-= PLAYER_SPEED * time.deltaTime;
+              this.room?.send("movementInput", {"x": local_player.x, "y": local_player.y});
+              // this.players.get(this.room!.sessionId)!.setPosition(local_player_pos!);
               break;
             case Key.DOWN:
-              bunny.y += 5 * time.deltaTime;
+              // this.room?.send("movementInput", InputType.DOWN);
+              // local_player_pos![1] += PLAYER_SPEED * time.deltaTime;
+              // local_player?.setPosition(local_player_pos!);
+              local_player.y += PLAYER_SPEED * time.deltaTime;
+              this.room?.send("movementInput", {"x": local_player.x, "y": local_player.y});
               break;
             case Key.LEFT:
-              bunny.x -= 5 * time.deltaTime;
+              // this.room?.send("movementInput", InputType.LEFT);
+              // local_player_pos![0] -= PLAYER_SPEED * time.deltaTime;
+              // local_player?.setPosition(local_player_pos!);
+              local_player.x -= PLAYER_SPEED * time.deltaTime;
+              this.room?.send("movementInput", {"x": local_player.x, "y": local_player.y});
               break;
             case Key.RIGHT:
-              bunny.x += 5 * time.deltaTime;
-              break;
-            case Key.E:
-              console.log("pressed E")
-              this.room?.send("init", {name: this.room.sessionId, x: 1, y: 1});
+              // this.room?.send("movementInput", InputType.RIGHT);
+              // local_player_pos![0] += PLAYER_SPEED * time.deltaTime;
+              // local_player?.setPosition(local_player_pos!);
+              local_player.x += PLAYER_SPEED * time.deltaTime;
+              this.room?.send("movementInput", {"x": local_player.x, "y": local_player.y});
               break;
             case Key.Q:
-              // swap following bunny
-              if (!this._lock){
-                this.camera.follow(this.camera.followedObject === this.firstBunny! ? this.secondBunny! : this.firstBunny!);
-                this._lock = true;
-              }
+              // this.room?.send("players", {});
+              // console.log("players: ", this.players);
+              // this.players.forEach( (player) => {
+                // console.log("player: ", player.getSessionId(), " ", player.getPositionX(), ",", player.getPositionY());
+              // });
+              break
           }
         }
-        // console.log("firstBunny: ",bunny.x, " ", bunny.y);
 
-        if (key === Key.Q && this.controller?.keys[key].pressed === false && this._lock) {
+        if (this.controller?.keys[key].pressed === false && this._lock) {
           this._lock = false;
         }
-      });
 
+      });
 
     });
   }
@@ -136,4 +183,5 @@ export class GameBase {
     this.controller?.destructor();
     this.controller = null;
   }
+
 }

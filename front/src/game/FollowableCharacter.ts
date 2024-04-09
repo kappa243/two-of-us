@@ -2,16 +2,29 @@ import { Container, ObservablePoint, Point, Sprite } from "pixi.js";
 import { IFollowable } from "./utils/followers/IFollowable";
 import { IFollower } from "./utils/followers/IFollower";
 
-export class FollowableChicken implements IFollowable<Point> {
+export class FollowableCharacter implements IFollowable<Point> {
   private followers: Set<IFollower<Point>> = new Set();
 
-  private chicken: Sprite;
+  private character: Sprite;
   private _position: ObservablePoint;
 
 
-  constructor(x: number, y: number) {
-    this.chicken = Sprite.from("chicken");
-    this.chicken.anchor.set(0.5);
+  constructor(x: number, y: number, characterType: number) {
+    switch(characterType){
+      case 0:
+        this.character = Sprite.from("bunny");
+          break;
+      case 1:
+        this.character = Sprite.from("eggHead");
+          break;
+      case 2:
+        this.character = Sprite.from("flowerTop");
+          break;
+      default:
+        this.character = Sprite.from("bunny");
+          break;
+  }
+    this.character.anchor.set(0.5);
     
     this._position = new ObservablePoint(this, x, y);
     this._setPosition(x, y);
@@ -19,7 +32,7 @@ export class FollowableChicken implements IFollowable<Point> {
   
 
   /**
-   * Updates position of the chicken
+   * Updates position of the character
    * @ignore
   */
   _onUpdate(point?: ObservablePoint | undefined) {
@@ -38,7 +51,7 @@ export class FollowableChicken implements IFollowable<Point> {
 
 
   private _setPosition(x: number, y: number) {
-    this.chicken.position.set(x, y);
+    this.character.position.set(x, y);
     this._position.set(x, y);
   }
 
@@ -67,19 +80,19 @@ export class FollowableChicken implements IFollowable<Point> {
   }
 
   get rotation() {
-    return this.chicken.rotation;
+    return this.character.rotation;
   }
 
   set rotation(rotation: number) {
-    this.chicken.rotation = rotation;
+    this.character.rotation = rotation;
   }
 
   addToContainer(container: Container) {
-    container.addChild(this.chicken);
+    container.addChild(this.character);
   }
 
   removeFromContainer(container: Container) {
-    container.removeChild(this.chicken);
+    container.removeChild(this.character);
   }
   
 }

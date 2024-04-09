@@ -1,0 +1,1 @@
+async function o(){let n=new URLSearchParams(window.location.search),r=n.get("version")||"v8",t=parseInt(n.get("count"))||1e5,a=n.get("renderer")||"webgpu";if(r==="v7"){let{bunnyMarkV7:e}=await import("./bunny-mark-v7-EU4T2DAH.js");e({totalBunnies:t})}else{let{bunnyMarkV8:e}=await import("./bunny-mark-v8-WBM5WKZN.js");e({totalBunnies:t,rendererType:a})}}o();
