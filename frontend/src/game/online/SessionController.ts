@@ -25,8 +25,12 @@ export class SessionController {
   }
 
 
+  init(){
+    // this.session.send("init", new MessageDataPlayer());
+  }
+
   playerJoinListener(callback: (player: any, key: any) => void) {
-    this.room.state.players.onAdd(callback, false);
+    this.room.state.players.onAdd(callback, true);
   }
 
   playerLeftListener(callback: (player: any, key: any) => void) {

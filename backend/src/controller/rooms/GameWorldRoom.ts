@@ -1,22 +1,22 @@
-import { Room, Client } from "@colyseus/core";
-import { GameWorldRoomState } from "../../model/schema/GameWorldRoomState";
-import { PlayerState, InputType, Pos } from "../../model/PlayerState";
+import { Client, Room } from "@colyseus/core";
 import { MessageDataPlayer } from "../../model/MessageDataPlayer";
+import { InputType, PlayerState, Pos } from "../../model/PlayerState";
 import { MAX_AMOUNT_CLIENTS_PER_ROOM, PLAYER_SPEED } from "../../model/configuration";
+import { GameWorldRoomState } from "../../model/schema/GameWorldRoomState";
 
 export class GameWorldRoom extends Room<GameWorldRoomState> {
   maxClients = MAX_AMOUNT_CLIENTS_PER_ROOM;
 
-  onCreate (options: any) {
+  onCreate(options: any) {
     this.setState(new GameWorldRoomState());
 
-    this.onMessage("init", (client: any, message: any) => {
-      // console.log("Message init has arrived! ", message);
-      let messageDataPlayer = new MessageDataPlayer(message.playerName, message.characterType);
-      let ps = new PlayerState(client.sessionId, messageDataPlayer);
-      // console.log("player pos: ", ps.position.x," ", ps.position.y);
-      this.state.players.set(client.sessionId, ps);
-    });
+    // this.onMessage("init", (client: any, message: any) => {
+    //   // console.log("Message init has arrived! ", message);
+    //   let messageDataPlayer = new MessageDataPlayer(message.playerName, message.characterType);
+    //   let ps = new PlayerState(client.sessionId, messageDataPlayer);
+    //   // console.log("player pos: ", ps.position.x," ", ps.position.y);
+    //   this.state.players.set(client.sessionId, ps);
+    // });
 
     // this.onMessage("location2", (client: any, message: any) => {
     //   console.log("Message arrived! ", message);
@@ -33,9 +33,9 @@ export class GameWorldRoom extends Room<GameWorldRoomState> {
     });
 
     // this.onMessage("players", (client: any, message: any) => {
-      // console.log("Message 3001 has arrived!", message);
-      // console.log("Q: ", this.state.players.size);
-      // console.log(this.state.players);
+    // console.log("Message 3001 has arrived!", message);
+    // console.log("Q: ", this.state.players.size);
+    // console.log(this.state.players);
     // });
 
 
@@ -57,37 +57,43 @@ export class GameWorldRoom extends Room<GameWorldRoomState> {
     // });
 
   }
-
-  onJoin (client: Client, options: any) {
+ 
+  onJoin(client: Client, options: any) {
     console.log(client.sessionId, "joined!");
     // this.state.players.set(client.sessionId, new Player(client.sessionId));
+    // console.log("Message init has arrived! ", message);
+    let messageDataPlayer = new MessageDataPlayer("dsf", 1);
+    let ps = new PlayerState(client.sessionId, messageDataPlayer);
+    // console.log("player pos: ", ps.position.x," ", ps.position.y);
+    this.state.players.set(client.sessionId, ps);
+
     client.send("init", "message_init");
   }
 
-  update(deltaTime: number){
+  update(deltaTime: number) {
     console.log("delta time: ", deltaTime);
 
     this.state.players.forEach((player: PlayerState) => {
       let input: InputType;
 
-      while(input = player.inputQueue.shift()){
+      while (input = player.inputQueue.shift()) {
         if (input as InputType === InputType.UP) {
           player.position.y -= PLAYER_SPEED * deltaTime;
         }
-        else if(input === InputType.DOWN) {
+        else if (input === InputType.DOWN) {
           player.position.y += PLAYER_SPEED * deltaTime;
         }
-        else if(input === InputType.RIGHT) {
+        else if (input === InputType.RIGHT) {
           player.position.x -= PLAYER_SPEED * deltaTime;
         }
-        else if(input === InputType.LEFT) {
+        else if (input === InputType.LEFT) {
           player.position.x += PLAYER_SPEED * deltaTime;
         }
       }
     });
   }
 
-  onLeave (client: Client, consented: boolean) {
+  onLeave(client: Client, consented: boolean) {
     console.log(client.sessionId, "left!");
     this.state.players.delete(client.sessionId);
   }

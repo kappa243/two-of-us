@@ -25,12 +25,15 @@ export class GameManager {
 
     this.players = new Map<string, Player>();
 
-    // this.registerListeners();
+    this.registerListeners();
   }
 
 
   registerListeners() {
-    this.sessionController.playerJoinListener(this.playerJoinListener);
+    this.sessionController.playerJoinListener(this.playerJoinListener.bind(this));
+    this.sessionController.playerLeftListener(this.playerLeaveListener.bind(this));
+
+    this.sessionController.init();
   }
 
   private playerJoinListener(player: any, key: any) {
@@ -43,34 +46,44 @@ export class GameManager {
     this.players.set(key, newPlayer);
     newPlayer.addToContainer(this.camera.container);
 
-    console.log("Player joined: ", newPlayer);
-
     if (newPlayer.sessionId === this.sessionController.getSessionId()) {
       this.local_player = newPlayer;
+      this.camera.follow(newPlayer);
     }
 
     player.listen("position", (value: any, previousValue: number[]) => {
       newPlayer.setCachedPositionX(value.x);
       newPlayer.setCachedPositionY(value.y);
     });
+
   }
 
+  private playerLeaveListener(player: any, key: any) {
+    let playerInstance = this.players.get(key);
 
-  private readonly keyVals = Object.values(Key).filter(v => typeof v === "number");
+    playerInstance?.removeFromContainer(this.camera.container);
+    playerInstance?.destructor();
+
+    this.players.delete(key);
+  }
+
 
   tick(time: Ticker) {
     this.players.forEach((player) => {
       if (player.sessionId !== this.local_player?.sessionId) {
         player.interpolate(0.25);
+        // console.log(player.position);
       }
     });
 
-    // for every Key values change player position
-    if (this.local_player !== null) {
-      for (let keyVal in this.keyVals) {
-        const key = keyVal as unknown as Key;
 
+    // for every Key values change player position
+
+    Object.values(Key).filter(v => typeof v === "number").forEach(keyVal => {
+      const key = keyVal as Key;
+      if (this.local_player !== null) {
         if (this.controller?.keys[key].pressed) {
+          console.log(this.players);
           switch (key) {
             case Key.UP:
               this.local_player.y -= PLAYER_SPEED * time.deltaTime;
@@ -93,7 +106,7 @@ export class GameManager {
           }
         }
       }
-    }
+    });
 
   }
 

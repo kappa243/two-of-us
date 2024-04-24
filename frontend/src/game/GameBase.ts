@@ -42,7 +42,7 @@ export class GameBase {
 
     this.sessionController = new SessionController(this.session);
     this.gameManager = new GameManager(this.app, this.sessionController, this.controller, this.camera);
-    this.gameManager.registerListeners();
+    // this.gameManager.registerListeners();
 
 
     this.app.ticker.add((time) => {

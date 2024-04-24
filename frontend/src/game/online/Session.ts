@@ -2,7 +2,6 @@ import { Client, Room } from "colyseus.js";
 import { BACKEND_URL } from "../../config";
 import { ConnectionError, ConnectionErrorType } from "../exception/ConnectionError";
 import { InitializationError } from "../exception/InitializationError";
-import { MessageDataPlayer } from "./MessageDataPlayer";
 
 export class Session {
   private room: Room<any> | null = null;
@@ -31,9 +30,9 @@ export class Session {
       else throw new ConnectionError(ConnectionErrorType.FailedToConnect);
     }
 
-    this.room?.onMessage("init", (message: any) => {
-      this.room?.send("init", new MessageDataPlayer());
-    });
+    // this.room?.onMessage("init", (message: any) => {
+    //   this.room?.send("init", new MessageDataPlayer());
+    // });
   }
 
   async leaveRoom() {

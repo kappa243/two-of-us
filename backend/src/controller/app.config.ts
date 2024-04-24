@@ -1,7 +1,7 @@
-import config from "@colyseus/tools";
 import { monitor } from "@colyseus/monitor";
 import { playground } from "@colyseus/playground";
-import { GAME_WORLD_ROOM_NAME } from "../model/configuration";
+import config from "@colyseus/tools";
+import { GAME_WORLD_ROOM_NAME } from "../config";
 /**
  * Import your Room files
  */

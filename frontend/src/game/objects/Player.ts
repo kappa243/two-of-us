@@ -25,12 +25,12 @@ export class Player extends Entity {
   }
 
   interpolate(percentage: number) {
-    this.position.x = (this.cachedPosition.x - this.position.x) * this.step(percentage, 0, 1) + this.position.x;
-    this.position.y = (this.cachedPosition.y - this.position.y) * this.step(percentage, 0, 1) + this.position.y;
+    this.x = (this.cachedPosition.x - this.x) * this.step(percentage, 0, 1) + this.x;
+    this.y = (this.cachedPosition.y - this.y) * this.step(percentage, 0, 1) + this.y;
   }
 
   setCachedPosition(position: Point) {
-    this.cachedPosition = position;
+    this.cachedPosition = position.clone();
   }
 
   setCachedPositionX(x: number) {
@@ -39,5 +39,9 @@ export class Player extends Entity {
 
   setCachedPositionY(y: number) {
     this.cachedPosition.y = y;
+  }
+
+  destructor() {
+    this.followers.forEach(follower => follower.unfollow());
   }
 }

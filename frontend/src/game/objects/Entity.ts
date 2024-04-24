@@ -3,7 +3,7 @@ import { IFollowable } from "./utils/followers/IFollowable";
 import { IFollower } from "./utils/followers/IFollower";
 
 export class Entity implements IFollowable<Point>, Observer<ObservablePoint> {
-  private followers: Set<IFollower<Point>> = new Set();
+  protected followers: Set<IFollower<Point>> = new Set();
 
   private sprite!: Sprite;
   private _position: ObservablePoint;
