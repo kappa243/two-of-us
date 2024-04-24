@@ -1,0 +1,14 @@
+{
+  "env": {
+    "browser": true,
+    "es2024": true,
+    "node": true
+  },
+  "extends": "next/core-web-vitals",
+  "rules": {
+    "indent": ["error", 2, {"SwitchCase": 1}],
+    "linebreak-style": ["error", "unix"],
+    "quotes": ["error", "double"],
+    "semi": ["error", "always"]  
+  }
+}
