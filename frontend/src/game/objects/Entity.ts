@@ -1,25 +1,23 @@
-import { Container, ObservablePoint, Point, Sprite } from "pixi.js";
+import { Container, ObservablePoint, Observer, Point, Sprite } from "pixi.js";
 import { IFollowable } from "./utils/followers/IFollowable";
 import { IFollower } from "./utils/followers/IFollower";
 
-export class FollowableBunny implements IFollowable<Point> {
-  private followers: Set<IFollower<Point>> = new Set();
+export class Entity implements IFollowable<Point>, Observer<ObservablePoint> {
+  protected followers: Set<IFollower<Point>> = new Set();
 
-  private bunny: Sprite;
+  private sprite!: Sprite;
   private _position: ObservablePoint;
 
+  constructor(){
+    this.sprite = Sprite.from("bunny");
+    this.sprite.anchor.set(0.5);
 
-  constructor(x: number, y: number) {
-    this.bunny = Sprite.from("bunny");
-    this.bunny.anchor.set(0.5);
-    
-    this._position = new ObservablePoint(this, x, y);
-    this._setPosition(x, y);
+    this._position = new ObservablePoint(this, 0, 0);
+    this._setPosition(0, 0);
   }
-  
 
   /**
-   * Updates position of the bunny
+   * Updates position of the character
    * @ignore
   */
   _onUpdate(point?: ObservablePoint | undefined) {
@@ -31,14 +29,14 @@ export class FollowableBunny implements IFollowable<Point> {
     this.followers.add(follower);
     follower._notify(this._position);
   }
-  
+
   unsubscribe(follower: IFollower<Point>): void {
     this.followers.delete(follower);
   }
 
 
   private _setPosition(x: number, y: number) {
-    this.bunny.position.set(x, y);
+    this.sprite.position.set(x, y);
     this._position.set(x, y);
   }
 
@@ -67,19 +65,19 @@ export class FollowableBunny implements IFollowable<Point> {
   }
 
   get rotation() {
-    return this.bunny.rotation;
+    return this.sprite.rotation;
   }
 
   set rotation(rotation: number) {
-    this.bunny.rotation = rotation;
+    this.sprite.rotation = rotation;
   }
 
   addToContainer(container: Container) {
-    container.addChild(this.bunny);
+    container.addChild(this.sprite);
   }
 
   removeFromContainer(container: Container) {
-    container.removeChild(this.bunny);
+    container.removeChild(this.sprite);
   }
-  
+
 }

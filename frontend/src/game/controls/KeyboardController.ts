@@ -4,6 +4,7 @@ export enum Key {
   LEFT,
   RIGHT,
   Q,
+  E,
 }
 
 const keyMap: { [key: string]: Key } = {
@@ -16,6 +17,7 @@ const keyMap: { [key: string]: Key } = {
   KeyD: Key.RIGHT,
   ArrowRight: Key.RIGHT,
   KeyQ: Key.Q,
+  KeyE: Key.E,
 };
 
 export interface KeyProps {
@@ -26,7 +28,7 @@ const KeyPropsDefault: KeyProps = {
   pressed: false,
 };
 
-export class Controller {
+export class KeyboardController {
   keys: Record<Key, KeyProps>;
 
   constructor() {
@@ -36,6 +38,7 @@ export class Controller {
       [Key.LEFT]: { ...KeyPropsDefault },
       [Key.RIGHT]: { ...KeyPropsDefault },
       [Key.Q]: { ...KeyPropsDefault },
+      [Key.E]: {...KeyPropsDefault },
     };
 
     window.addEventListener("keydown", (event) => this.keydownHandler(event));
