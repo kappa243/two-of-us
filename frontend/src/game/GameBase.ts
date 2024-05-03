@@ -21,9 +21,8 @@ export class GameBase {
    */
   async preload() {
     const assets = [
-      { alias: "bunny", src: "https://pixijs.com/assets/bunny.png" },
-      { alias: "eggHead", src: "https://pixijs.com/assets/eggHead.png" },
-      { alias: "flowerTop", src: "https://pixijs.com/assets/flowerTop.png" }
+      { alias: "red", src: "assets/red.png" },
+      { alias: "map", src: "assets/new_map.png"}
     ];
 
     await Assets.load(assets);

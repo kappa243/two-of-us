@@ -9,8 +9,10 @@ export class Entity implements IFollowable<Point>, Observer<ObservablePoint> {
   private _position: ObservablePoint;
 
   constructor(){
-    this.sprite = Sprite.from("bunny");
+    this.sprite = Sprite.from("red"); // will be replaced by smart assets
+    this.sprite.scale.set(0.02);
     this.sprite.anchor.set(0.5);
+    this.sprite.zIndex = 50;
 
     this._position = new ObservablePoint(this, 0, 0);
     this._setPosition(0, 0);
