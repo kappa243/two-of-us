@@ -8,15 +8,28 @@ https://github.com/akapkotel/light_raycasting
 import { start } from "repl";
 import { formatWithOptions } from "util";
 
+class Point{
+    x: number;
+    y: number;
+    constructor(x: number, y: number){
+        this.x = x;
+        this.y = y;
+    }
+}
+
 export class MaskLight {
     private position = [0,0];
     private obstacles: any[] = [];
     private borders: any[] = [];
     private walls: any[] = [];
     private wallsCenter: { [id: number] : number[]; } = {};
-    private points: Set<string> = new Set();
-    private points_begin: { [id: string] : any[]; } = {};
-    private points_end: { [id: string] : any[]; } = {};
+    private points: Set<Point> = new Set();
+    // private points_begin: { Point : any[]; } = {};
+    // private points_begin: Map<Point, any[]> = new Map();
+    private points_begin: any[] = [];
+    // private points_end: { [id: string] : any[]; } = {};
+    // private points_end: Map<Point, any[]> = new Map();
+    private points_end: any[] = [];
     outputPolygon: number[][] = [];
     private SCREEN_WIDTH = 0;
     private SCREEN_HEIGHT = 0;
@@ -60,8 +73,8 @@ export class MaskLight {
       this.walls = [];
       this.wallsCenter = {};
       this.points = new Set();
-      this.points_begin = {};
-      this.points_end = {};
+      this.points_begin = []; // new Map();
+      this.points_end = []; //new Map();
       this.outputPolygon = [];
 
       let startTime = performance.now();
@@ -212,6 +225,15 @@ export class MaskLight {
         }
       }
     }
+
+    getWallFromArray(arr: number[][][], point: number[]){
+      for(let i = 0; i<arr.length; i++){
+        if(arr[i][0][0] === point[0] && arr[i][0][1] === point[1]){
+          return arr[i][1];
+        }
+      }
+      return null;
+    }
   
     setPosition(x: number, y: number) {
       this.position = [x, y];
@@ -223,14 +245,17 @@ export class MaskLight {
   
     setPoints(){
       this.walls.forEach( (wall, idx) => {
-        if(!this.points.has(JSON.stringify(wall[0]))){
-          this.points.add(JSON.stringify(wall[0]));
+        if(!this.points.has(new Point(wall[0][0], wall[0][1]))){
+          this.points.add(new Point(wall[0][0], wall[0][1]));
         }
-        this.points_begin[JSON.stringify(wall[0])] = wall;
-        if(!this.points.has(JSON.stringify(wall[1]))){
-          this.points.add(JSON.stringify(wall[1]));
+        // this.points_begin[JSON.stringify(wall[0])] = wall;
+        // this.points_begin[new Point(wall[0][0], wall[0][1])] = wall;
+        this.points_begin.push([wall[0], wall]);
+        if(!this.points.has(new Point(wall[1][0], wall[1][1]))){
+          this.points.add(new Point(wall[1][0], wall[1][1]));
         }
-        this.points_end[JSON.stringify(wall[1])] = wall;
+        // this.points_end[JSON.stringify(wall[1])] = wall;
+        this.points_end.push([wall[1], wall]);
       });
     }
   
@@ -241,11 +266,11 @@ export class MaskLight {
       let points = Array.from(this.points);
       // console.log("sorting points");
       points.sort((a, b) => {
-        a = JSON.parse(a);
-        b = JSON.parse(b);
+        let aa = [a.x, a.y];
+        let bb = [b.x, b.y];
         // console.log("vectors: ", this.position, a);
         // console.log("angleBetweenVectors: ", this.degrees(this.angleBetweenVectors(this.position, a)));
-        if (this.degrees(this.angleBetweenVectors(this.position, a)) < this.degrees(this.angleBetweenVectors(this.position, b))){
+        if (this.degrees(this.angleBetweenVectors(this.position, aa)) < this.degrees(this.angleBetweenVectors(this.position, bb))){
           return -1;
         } else {
           return 1;
@@ -303,9 +328,9 @@ export class MaskLight {
   
           if(this.intersecttion(wall, ray)){
             let endRay = ray[1];
-            if(this.points.has(JSON.stringify(endRay))) {
-              let wall1 = this.points_begin[JSON.stringify(endRay)];
-              let wall2 = this.points_end[JSON.stringify(endRay)];
+            if(this.points.has(new Point(endRay[0], endRay[1]))) {
+              let wall1 = this.getWallFromArray(this.points_begin, endRay);
+              let wall2 = this.getWallFromArray(this.points_end, endRay);
               if (wall !== wall1 && wall !== wall2){
                 collision.add(ray);
               }
@@ -357,7 +382,7 @@ export class MaskLight {
       let veiled: Set<string> = new Set();
   
       this.points.forEach( (point1) => {
-        let point = JSON.parse(point1);
+        let point = [point1.x, point1.y]; // JSON.parse(point1);
         let angle = this.angleBetweenVectors(this.position, point);
         // console.log("point: ", point)
         // console.log("angle: ", angle)
@@ -367,7 +392,8 @@ export class MaskLight {
           return; 
         }
   
-        let wall = this.points_begin[JSON.stringify(point)];
+        // let wall = this.points_begin[JSON.stringify(point)];
+        let wall = this.getWallFromArray(this.points_begin, point);
         if (this.checkOrientation(this.position, point, wall[1])) {
           // console.log("angle in end_b: ", angle);
           let passAngle = -this.toRadians(this.degrees(angle)+0.05);
@@ -382,7 +408,8 @@ export class MaskLight {
   
         rays.push([this.position, point]);
   
-        wall = this.points_end[JSON.stringify(point)];
+        // wall = this.points_end[JSON.stringify(point)];
+        wall = this.getWallFromArray(this.points_end, point);
         if (!this.checkOrientation(this.position , point, wall[0])){
           // console.log("angle in end_a: ", angle);
           let passAngle = -this.toRadians(this.degrees(angle)-0.05);
@@ -396,7 +423,8 @@ export class MaskLight {
         }
   
         this.points.forEach( (point22) => {
-          let point2 = JSON.parse(point22);
+          // let point2 = JSON.parse(point22);
+          let point2 = [point22.x, point22.y];
           if(this.vectorLength(this.position, point2) > this.vectorLength(this.position, point)){
             let angle2 = this.angleBetweenVectors(this.position, point2);
   
