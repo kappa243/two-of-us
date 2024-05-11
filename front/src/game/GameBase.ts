@@ -6,6 +6,16 @@ import { get, map } from "lodash";
 import { runInThisContext } from "vm";
 import { MaskLight } from "./MaskLight";
 
+enum ObstacleType {
+  FULL = 1,
+  DOUBLE_EDGE = 2
+}
+
+enum LayerType {
+  TestLayer = 1,
+  GeneratedLayer = 2
+}
+
 export class GameBase {
   private app: Application;
 
@@ -16,11 +26,17 @@ export class GameBase {
   private camera!: Camera;
 
   private _lock: boolean = false;
-  // private screenObstacles: number[][] = [[100,100,120,120,120,100],[300,300,350,350,350,300],[200,250,250,300,250,250]];
-  private screenObstacles: number[][] = [[100,100,120,120],[300,300,350,350],[200,250,250,300]];
-  private posX = 0; //this.SCREEN_WIDTH/2;
-  private posY = 0; //this.SCREEN_HEIGHT/2;
-  private layout: number[][] = [];
+  private screenObstacles: number[][] = [];
+  private posX = 0;
+  private posY = 0;
+  private delayRenderTime = 50;
+
+  // You can change this to test different scenarios
+  private render_parameters = {
+    obstacleType: ObstacleType.FULL,
+    layerType: LayerType.GeneratedLayer
+  }
+
 
   /**
    * Preloads assets
@@ -51,21 +67,30 @@ export class GameBase {
     return map_layout;
   }
 
-  testEdgeVision(hiddenContainer: Container, x: number, y: number){
-    // let obs = [[100,100,120,120,120,100],[300,300,350,350,350,300],[200,250,250,300,250,250]];
+  testEdgeVision(hiddenContainer: Container, x: number, y: number, obstacleType: ObstacleType){
+    let obs_full = [[100,100,120,120,120,100],[300,300,350,350,350,300],[200,250,250,300,250,250]];
+    let obs_double_edge = [[100,100,120,120],[300,300,350,350],[200,250,250,300]];
+    if(this.screenObstacles.length === 0){
+      if(obstacleType === ObstacleType.FULL){
+        this.screenObstacles = obs_full;
+      }
+      else {
+        this.screenObstacles = obs_double_edge;
+      }
+      console.log("Obstacle size: ", this.screenObstacles.length, " points amount: ", this.screenObstacles.length*this.screenObstacles[0].length);
+    }
     let obs = this.screenObstacles;
     hiddenContainer.removeChildren();
     obs.forEach( (obstacle) => {
       const rect = new Graphics().poly(obstacle).fill({ color: "black" });
       hiddenContainer.addChild(rect);
     });
-    // return;
 
     let mLight = new MaskLight(obs, this.SCREEN_WIDTH, this.SCREEN_HEIGHT);
     mLight.setPosition(x,y);
     const myPosition = new Graphics().rect(x,y, 10, 10).fill({ color: "green"});
     mLight.createRays();
-    // console.log("Output polygon: ", mLight.outputPolygon);
+
     let segment: number[] = [];
     mLight.outputPolygon.forEach( (point) => {
       segment.push(point[0]);
@@ -79,30 +104,33 @@ export class GameBase {
 
   }
 
-  onMapEdgeVision(hiddenContainer: Container, x: number, y: number){
-    if(this.layout.length === 0){
-      this.layout = this.generateMap();
-      this.screenObstacles = this.layout;
+  onMapEdgeVision(hiddenContainer: Container, x: number, y: number, obstacleType: ObstacleType){
+    if(this.screenObstacles.length === 0){
+      this.screenObstacles = this.generateMap();
+      console.log("Obstacle size: ", this.screenObstacles.length, " points amount: ", this.screenObstacles.length*this.screenObstacles[0].length);
     }
     hiddenContainer.removeChildren();
     let offset = 4;
     let all_segments: number[][] = [];
-    this.layout.forEach( (segment) => {
-      all_segments.push([segment[0], segment[1], segment[2], segment[3]]);
-      // all_segments.push([segment[0], segment[1], segment[2], segment[3], segment[2] + offset, segment[3], segment[0]+offset, segment[1]]);
+    this.screenObstacles.forEach( (segment) => {
+      if(obstacleType === ObstacleType.FULL){
+        all_segments.push([segment[0], segment[1], segment[2], segment[3], segment[2] + offset, segment[3], segment[0]+offset, segment[1]]);
+      }
+      else{
+        all_segments.push([segment[0], segment[1], segment[2], segment[3]]);
+      }
+      
     });
     all_segments.forEach( (segment) => {
       const rect = new Graphics().poly(segment).fill({ color: "black" });
       hiddenContainer.addChild(rect);
     });
-    // return;
 
-    // console.log("Layout: ", layout)
     let mLight = new MaskLight(all_segments, this.SCREEN_WIDTH, this.SCREEN_HEIGHT);
     mLight.setPosition(this.SCREEN_WIDTH/2, this.SCREEN_HEIGHT/2);
     const myPosition = new Graphics().rect(140,140, 10, 10).fill({ color: "green"});
     mLight.createRays();
-    // console.log("Output polygon: ", mLight2.outputPolygon);
+
     let segment2: number[] = [];
     mLight.outputPolygon.forEach( (point) => {
       segment2.push(point[0]);
@@ -114,10 +142,20 @@ export class GameBase {
     hiddenContainer.addChild(myPosition);
   }
 
+  renderFunction(hiddenContainer: Container){
+    let startTime = performance.now();
+    if(this.render_parameters.layerType === LayerType.TestLayer){
+      this.testEdgeVision(hiddenContainer, this.posX, this.posY, this.render_parameters.obstacleType);
+    }
+    else if (this.render_parameters.layerType === LayerType.GeneratedLayer) {
+      this.onMapEdgeVision(hiddenContainer, this.posX, this.posY, this.render_parameters.obstacleType);
+    }
+    let endTime = performance.now();
+    console.log("Time to render: ", endTime-startTime, "ms");
+  }
 
   async run(a: any) {
     await this.preload();
-    // console.log(a);
 
     this.controller = new Controller();
     this.camera = new Camera(this.app);
@@ -130,12 +168,12 @@ export class GameBase {
     const secondBunny = new FollowableBunny(25, 25);
 
     firstBunny.addToContainer(this.camera.container);
-    // secondBunny.addToContainer(this.camera.container);
 
-    firstBunny.position.x = this.posX; // this.app.screen.width / 2;
-    firstBunny.position.y = this.posY; // this.app.screen.height / 2;
+
+    firstBunny.position.x = this.posX;
+    firstBunny.position.y = this.posY;
     
-    // this.camera.setPosition(0, 0);
+    this.camera.setPosition(0, 0);
 
     this.camera.follow(firstBunny);
 
@@ -145,11 +183,9 @@ export class GameBase {
     const hiddenContainer = new Container();
     hiddenContainer.zIndex = 100;
     this.app.stage.addChild(hiddenContainer);
-    let startTime = performance.now();
-    // this.testEdgeVision(hiddenContainer, this.posX, this.posY);
-    this.onMapEdgeVision(hiddenContainer, this.posX, this.posY);
-    let endTime = performance.now();
-    console.log("Time: ", endTime - startTime);
+
+    this.renderFunction(hiddenContainer);
+
     const darkenLayer = new Graphics().rect(0, 0, this.app.screen.width + 0, this.app.screen.height + 0).fill({ color: 0x000000, alpha: 0.5 });
 
     hiddenContainer.addChild(darkenLayer);
@@ -207,13 +243,6 @@ export class GameBase {
     this.app.ticker.add((time) => {
       
       const bunny = this.camera.followedObject as FollowableBunny;
-      
-      // focus1.x = this.app.screen.width / 2 - bunny.x;
-      // focus1.y = this.app.screen.height / 2 - bunny.y;
-      
-      // console.log(this.camera.filterContainer.getBounds());
-      
-      // bunny.rotation += 0.1 * time.deltaTime;
 
       // for every Key values change bunny position
       Object.values(Key).filter(v => typeof v === "number").forEach( keyVal => {
@@ -262,13 +291,11 @@ export class GameBase {
           this._lock = false;
         }
 
-        if((deltaX !== 0 || deltaY !== 0) && performance.now() - beginTime > 10){
+        if((deltaX !== 0 || deltaY !== 0) && performance.now() - beginTime > this.delayRenderTime){
           beginTime = performance.now();
-          let startTime = performance.now();
-          // this.testEdgeVision(hiddenContainer, this.posX, this.posY);
-          this.onMapEdgeVision(hiddenContainer, this.posX, this.posY);
-          let endTime = performance.now();
-          console.log("Time test: ", endTime - startTime);
+          
+          this.renderFunction(hiddenContainer);
+
         }
 
       });
