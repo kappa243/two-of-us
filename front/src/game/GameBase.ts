@@ -16,7 +16,8 @@ export class GameBase {
   private camera!: Camera;
 
   private _lock: boolean = false;
-  private screenObstacles: number[][] = [[100,100,120,120,120,100],[300,300,350,350,350,300],[200,250,250,300,250,250]];
+  // private screenObstacles: number[][] = [[100,100,120,120,120,100],[300,300,350,350,350,300],[200,250,250,300,250,250]];
+  private screenObstacles: number[][] = [[100,100,120,120],[300,300,350,350],[200,250,250,300]];
   private posX = 0; //this.SCREEN_WIDTH/2;
   private posY = 0; //this.SCREEN_HEIGHT/2;
   private layout: number[][] = [];
@@ -87,7 +88,8 @@ export class GameBase {
     let offset = 4;
     let all_segments: number[][] = [];
     this.layout.forEach( (segment) => {
-      all_segments.push([segment[0], segment[1], segment[2], segment[3], segment[2] + offset, segment[3], segment[0]+offset, segment[1]]);
+      all_segments.push([segment[0], segment[1], segment[2], segment[3]]);
+      // all_segments.push([segment[0], segment[1], segment[2], segment[3], segment[2] + offset, segment[3], segment[0]+offset, segment[1]]);
     });
     all_segments.forEach( (segment) => {
       const rect = new Graphics().poly(segment).fill({ color: "black" });
@@ -142,10 +144,9 @@ export class GameBase {
 
     const hiddenContainer = new Container();
     hiddenContainer.zIndex = 100;
-    // this.onMapEdgeVision(hiddenContainer);
     this.app.stage.addChild(hiddenContainer);
     let startTime = performance.now();
-    //this.testEdgeVision(hiddenContainer);
+    // this.testEdgeVision(hiddenContainer, this.posX, this.posY);
     this.onMapEdgeVision(hiddenContainer, this.posX, this.posY);
     let endTime = performance.now();
     console.log("Time: ", endTime - startTime);
@@ -264,7 +265,7 @@ export class GameBase {
         if((deltaX !== 0 || deltaY !== 0) && performance.now() - beginTime > 10){
           beginTime = performance.now();
           let startTime = performance.now();
-          //this.testEdgeVision(hiddenContainer, this.posX, this.posY);
+          // this.testEdgeVision(hiddenContainer, this.posX, this.posY);
           this.onMapEdgeVision(hiddenContainer, this.posX, this.posY);
           let endTime = performance.now();
           console.log("Time test: ", endTime - startTime);

@@ -19,7 +19,7 @@ class Point{
 
 export class MaskLight {
     private position = [0,0];
-    private obstacles: any[] = [];
+    // private obstacles: any[] = [];
     private borders: any[] = [];
     private walls: any[] = [];
     private wallsCenter: { [id: number] : number[]; } = {};
@@ -69,7 +69,7 @@ export class MaskLight {
 
     initialize(obstacles: any[]){
 
-      this.obstacles = [];
+      // this.obstacles = [];
       this.walls = [];
       this.wallsCenter = {};
       this.points = new Set();
@@ -97,7 +97,7 @@ export class MaskLight {
   
       startTime = performance.now();
       obstacles.forEach( (obstacle) => {
-        this.addObsctacle(obstacle);
+        this.addObstacle(obstacle);
       });
       endTime = performance.now();
       console.log("Time to add obstacles: ", endTime - startTime);
@@ -200,13 +200,9 @@ export class MaskLight {
       }
       return result;
     }
-
-    getPointId(point: number[]){
-      return point[0]+10000*point[1];
-    }
   
-    addObsctacle(obstacle: any) {
-      this.obstacles.push(obstacle);
+    addObstacle(obstacle: any) {
+      // this.obstacles.push(obstacle);
       for(let i = 0; i<obstacle.length-2; i+=2){
         let wall = [[obstacle[i], obstacle[i+1]], [obstacle[i+2], obstacle[i+3]]];
         this.walls.push(wall);
@@ -215,23 +211,42 @@ export class MaskLight {
         let center = this.moveUsingAngle(wall[0], -direction, halfLength)
         this.wallsCenter[Object.keys(this.wallsCenter).length] = center
         // console.log("center2: ", Object.keys(this.wallsCenter).length ," ", center)
-        if (i === obstacle.length-4 && i !== 0){
-          let wall = [[obstacle[i+2], obstacle[i+3]], [obstacle[0], obstacle[1]]];
-          this.walls.push(wall);
-          let halfLength = this.vectorLength(wall[0], wall[1]) / 2
-          let direction = this.angleBetweenVectors(wall[0], wall[1])
-          let center = this.moveUsingAngle(wall[0], -direction, halfLength)
-          this.wallsCenter[Object.keys(this.wallsCenter).length] = center
-        }
+
+        // for full obstacle
+        // if (i === obstacle.length-4 && i !== 0){
+        //   let wall = [[obstacle[i+2], obstacle[i+3]], [obstacle[0], obstacle[1]]];
+        //   this.walls.push(wall);
+        //   let halfLength = this.vectorLength(wall[0], wall[1]) / 2
+        //   let direction = this.angleBetweenVectors(wall[0], wall[1])
+        //   let center = this.moveUsingAngle(wall[0], -direction, halfLength)
+        //   this.wallsCenter[Object.keys(this.wallsCenter).length] = center
+        // }
+
+        // for double edge obstacle
+        wall = [[obstacle[i+2], obstacle[i+3]], [obstacle[i], obstacle[i+1]]];
+        this.walls.push(wall);
+        halfLength = this.vectorLength(wall[0], wall[1]) / 2
+        direction = this.angleBetweenVectors(wall[0], wall[1])
+        center = this.moveUsingAngle(wall[0], -direction, halfLength)
+        this.wallsCenter[Object.keys(this.wallsCenter).length] = center
+        // if (i === obstacle.length-4 && i !== 0){
+        //   let wall = [[obstacle[i+2], obstacle[i+3]], [obstacle[0], obstacle[1]]];
+        //   this.walls.push(wall);
+        //   let halfLength = this.vectorLength(wall[0], wall[1]) / 2
+        //   let direction = this.angleBetweenVectors(wall[0], wall[1])
+        //   let center = this.moveUsingAngle(wall[0], -direction, halfLength)
+        //   this.wallsCenter[Object.keys(this.wallsCenter).length] = center
+        // }
       }
     }
 
-    getWallFromArray(arr: number[][][], point: number[]){
+    getWallFromArray(arr: any[], point: number[]){
       for(let i = 0; i<arr.length; i++){
         if(arr[i][0][0] === point[0] && arr[i][0][1] === point[1]){
           return arr[i][1];
         }
       }
+      console.log("not found");
       return null;
     }
   
@@ -245,16 +260,20 @@ export class MaskLight {
   
     setPoints(){
       this.walls.forEach( (wall, idx) => {
+        // console.log("point1: ", wall[0]);
+        // console.log("point2: ", wall[1]);
         if(!this.points.has(new Point(wall[0][0], wall[0][1]))){
           this.points.add(new Point(wall[0][0], wall[0][1]));
         }
         // this.points_begin[JSON.stringify(wall[0])] = wall;
         // this.points_begin[new Point(wall[0][0], wall[0][1])] = wall;
         this.points_begin.push([wall[0], wall]);
+        // this.points_end.push([wall[0], wall]);
         if(!this.points.has(new Point(wall[1][0], wall[1][1]))){
           this.points.add(new Point(wall[1][0], wall[1][1]));
         }
         // this.points_end[JSON.stringify(wall[1])] = wall;
+        // this.points_begin.push([wall[1], wall]);
         this.points_end.push([wall[1], wall]);
       });
     }
@@ -394,32 +413,38 @@ export class MaskLight {
   
         // let wall = this.points_begin[JSON.stringify(point)];
         let wall = this.getWallFromArray(this.points_begin, point);
-        if (this.checkOrientation(this.position, point, wall[1])) {
-          // console.log("angle in end_b: ", angle);
-          let passAngle = -this.toRadians(this.degrees(angle)+0.05);
-          let end = this.moveUsingAngle(this.position, passAngle, 1500);
-          // console.log("end_b: ", end);
-          rays.push([this.position, end]);
-          rightmost_angle = angle
-        }
-        else {
-          rightmost_angle = this.angleBetweenVectors(this.position, wall[1]);
+        if(wall !== null){
+          if (this.checkOrientation(this.position, point, wall[1])) {
+            // console.log("angle in end_b: ", angle);
+            let passAngle = -this.toRadians(this.degrees(angle)+0.05);
+            let end = this.moveUsingAngle(this.position, passAngle, 1500);
+            // console.log("end_b: ", end);
+            rays.push([this.position, end]);
+            rightmost_angle = angle
+          }
+          else {
+            rightmost_angle = this.angleBetweenVectors(this.position, wall[1]);
+          }
         }
   
         rays.push([this.position, point]);
   
         // wall = this.points_end[JSON.stringify(point)];
         wall = this.getWallFromArray(this.points_end, point);
-        if (!this.checkOrientation(this.position , point, wall[0])){
-          // console.log("angle in end_a: ", angle);
-          let passAngle = -this.toRadians(this.degrees(angle)-0.05);
-          let end = this.moveUsingAngle(this.position, passAngle, 1500);
-          // console.log("end_a: ", end);
-          rays.push([this.position, end]);
-          leftmost_angle = angle
-        }
-        else {
-          leftmost_angle = this.angleBetweenVectors(this.position, wall[0]);
+        // if(wall === null)
+          // console.log("point for null: ", point);
+        if(wall !== null){
+          if (!this.checkOrientation(this.position , point, wall[0])){
+            // console.log("angle in end_a: ", angle);
+            let passAngle = -this.toRadians(this.degrees(angle)-0.05);
+            let end = this.moveUsingAngle(this.position, passAngle, 1500);
+            // console.log("end_a: ", end);
+            rays.push([this.position, end]);
+            leftmost_angle = angle
+          }
+          else {
+            leftmost_angle = this.angleBetweenVectors(this.position, wall[0]);
+          }
         }
   
         this.points.forEach( (point22) => {
