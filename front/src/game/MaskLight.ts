@@ -243,6 +243,9 @@ export class MaskLight {
   }
 
   createRays() {
+    this.outputPolygon = [];
+    
+
     let points = Array.from(this.points);
     points.sort((a, b) => {
       let aa = [a.x, a.y];

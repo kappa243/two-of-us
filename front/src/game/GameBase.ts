@@ -103,6 +103,7 @@ export class GameBase {
   }
 
   private all_segments: number[][] = [];
+  private mLight!: MaskLight;
 
   onMapEdgeVision(hiddenContainer: Container, x: number, y: number, obstacleType: ObstacleType) {
     if (this.screenObstacles.length === 0) {
@@ -126,18 +127,19 @@ export class GameBase {
         const rect = new Graphics().poly(segment).fill({ color: "black" });
         hiddenContainer.addChild(rect);
       });
+
+      this.mLight = new MaskLight(this.all_segments, this.SCREEN_WIDTH, this.SCREEN_HEIGHT);
     }
     let startTime = performance.now();
-    let mLight = new MaskLight(this.all_segments, this.SCREEN_WIDTH, this.SCREEN_HEIGHT);
-    mLight.setPosition(x, y);
+    this.mLight.setPosition(x, y);
     // const myPosition = new Graphics().rect(140, 140, 10, 10).fill({ color: "green" });
-    mLight.createRays();
+    this.mLight.createRays();
     
     let endTime = performance.now();
     console.log("Time to render light: ", endTime - startTime, "ms");
 
     let segment2: number[] = [];
-    mLight.outputPolygon.forEach((point) => {
+    this.mLight.outputPolygon.forEach((point) => {
       segment2.push(point[0]);
       segment2.push(point[1]);
     });
