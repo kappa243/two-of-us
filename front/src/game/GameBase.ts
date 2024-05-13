@@ -127,11 +127,14 @@ export class GameBase {
         hiddenContainer.addChild(rect);
       });
     }
-
+    let startTime = performance.now();
     let mLight = new MaskLight(this.all_segments, this.SCREEN_WIDTH, this.SCREEN_HEIGHT);
     mLight.setPosition(x, y);
     // const myPosition = new Graphics().rect(140, 140, 10, 10).fill({ color: "green" });
     mLight.createRays();
+    
+    let endTime = performance.now();
+    console.log("Time to render light: ", endTime - startTime, "ms");
 
     let segment2: number[] = [];
     mLight.outputPolygon.forEach((point) => {
@@ -142,6 +145,7 @@ export class GameBase {
     const lightPolygon2 = new Graphics().poly(segment2).fill({ color: "white", alpha: 0.5 });
     hiddenContainer.removeChildAt(hiddenContainer.children.length - 1);
     hiddenContainer.addChild(lightPolygon2);
+    
 
     // hiddenContainer.addChild(myPosition);
   }
@@ -254,13 +258,17 @@ export class GameBase {
 
       const bunny = this.camera.followedObject as FollowableBunny;
 
+      let moved = false;
       // for every Key values change bunny position
       Object.values(Key).filter(v => typeof v === "number").forEach(keyVal => {
         const key = keyVal as Key;
         let deltaX = 0;
         let deltaY = 0;
 
+        
+
         if (this.controller?.keys[key].pressed) {
+          moved = true;
           switch (key) {
             case Key.UP:
               bunny.y -= 5 * time.deltaTime;
@@ -301,17 +309,21 @@ export class GameBase {
           this._lock = false;
         }
 
-        if ((deltaX !== 0 || deltaY !== 0) && performance.now() - beginTime > this.delayRenderTime) {
-          beginTime = performance.now();
+        // if ((deltaX !== 0 || deltaY !== 0) && performance.now() - beginTime > this.delayRenderTime) {
+        //   // beginTime = performance.now();
 
-          this.posX = firstBunny.position.x;
-          this.posY = firstBunny.position.y;
+          
 
-          this.renderFunction(edgeContainer);
-
-        }
+        // }
 
       });
+
+      if (moved){
+        this.posX = firstBunny.position.x;
+        this.posY = firstBunny.position.y;
+
+        this.renderFunction(edgeContainer);
+      }
 
     });
   }

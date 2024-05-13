@@ -61,7 +61,7 @@ export class MaskLight {
   }
 
   initialize(obstacles: any[]) {
-
+    // TODO optimize
     this.walls = [];
     this.wallsCenter = {};
     this.points = new Set();
