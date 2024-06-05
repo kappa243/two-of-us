@@ -12,7 +12,6 @@ export class Entity implements IFollowable<Point>, Observer<ObservablePoint> {
     this.sprite = Sprite.from("red"); // will be replaced by smart assets
     this.sprite.scale.set(0.03);
     this.sprite.anchor.set(0.5);
-    this.sprite.zIndex = 50;
 
     this._position = new ObservablePoint(this, 0, 0);
     this._setPosition(0, 0);
@@ -40,6 +39,7 @@ export class Entity implements IFollowable<Point>, Observer<ObservablePoint> {
   private _setPosition(x: number, y: number) {
     this.sprite.position.set(x, y);
     this._position.set(x, y);
+    this.sprite.zIndex = y;
   }
 
   get x() {

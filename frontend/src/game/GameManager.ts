@@ -1,4 +1,4 @@
-import { PLAYER_SPEED } from "@/config";
+import { MAP_BOTTOM_Y, MAP_TOP_Y, PLAYER_SPEED } from "@/config";
 import { Application, Container, Sprite, Ticker } from "pixi.js";
 import { Camera } from "./Camera";
 import { Key, KeyboardController } from "./controls/KeyboardController";
@@ -50,9 +50,9 @@ export class GameManager {
     this.uiContainer = new Container();
 
     // set z-index
-    this.gameContentContainer.zIndex = 500;
-    this.backgroundContentContainer.zIndex = 0;
-    this.foregroundContentContainer.zIndex = 1000;
+    this.gameContentContainer.zIndex = (MAP_BOTTOM_Y - MAP_TOP_Y) / 2;
+    this.backgroundContentContainer.zIndex = MAP_TOP_Y;
+    this.foregroundContentContainer.zIndex = MAP_BOTTOM_Y;
 
     this.overlayContainer.zIndex = 1000;
     this.uiContainer.zIndex = 2000;
@@ -121,15 +121,15 @@ export class GameManager {
     let he = Math.floor(time.lastTime / (1000 / 20));
     if (he > this.nLastTime) {
       this.nLastTime = he;
-      console.log("Time: ", he);
+      // console.log("Time: ", he);
 
       this.sessionController.sendPosition(this.local_player!.position);
     }
 
     this.players.forEach((player) => {
-      console.log(player.sessionId);
-      console.log(this.local_player?.sessionId);
-      console.log(player.sessionId !== this.local_player?.sessionId);
+      // console.log(player.sessionId);
+      console.log(this.local_player?.position);
+      // console.log(player.sessionId !== this.local_player?.sessionId);
       if (player.sessionId !== this.local_player?.sessionId) {
         player.interpolate(0.25);
         // console.log(player.position);
