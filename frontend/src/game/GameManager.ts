@@ -14,15 +14,17 @@ export class GameManager {
   private camera: Camera;
 
   // layers
-  private backgroundContentContainer: Container;
-  private gameContentContainer: Container;
-  private foregroundContentContainer: Container;
+  private backgroundContentContainer!: Container;
+  private gameContentContainer!: Container;
+  private foregroundContentContainer!: Container;
 
-  private uiContainer: Container;
-  private overlayContainer: Container;
+  private uiContainer!: Container;
+  private overlayContainer!: Container;
 
   private players: Map<string, Player>;
   private local_player: Player | null = null;
+
+  private nLastTime: number = 0;
 
   constructor(app: Application, sessionController: SessionController, controller: KeyboardController, camera: Camera) {
     this.app = app;
@@ -48,18 +50,25 @@ export class GameManager {
     this.uiContainer = new Container();
 
     // set z-index
-    this.gameContentContainer.zIndex = 0;
+    this.gameContentContainer.zIndex = 500;
     this.backgroundContentContainer.zIndex = 0;
-    this.foregroundContentContainer.zIndex = 100;
+    this.foregroundContentContainer.zIndex = 1000;
 
     this.overlayContainer.zIndex = 1000;
     this.uiContainer.zIndex = 2000;
 
     // setup map
     let mapSprite = Sprite.from("map");
-    mapSprite.scale.set(0.7);
+    let mapAboveSprite = Sprite.from("map_above");
+
+    mapSprite.scale.set(1.0);
     mapSprite.anchor.set(0.5);
-    this.backgroundContentContainer.addChild(mapSprite);    
+
+    mapAboveSprite.scale.set(1.0);
+    mapAboveSprite.anchor.set(0.5);
+
+    this.backgroundContentContainer.addChild(mapSprite);
+    this.foregroundContentContainer.addChild(mapAboveSprite);
 
     // add to stage
     this.gameContentContainer.addChild(this.backgroundContentContainer);
@@ -90,12 +99,12 @@ export class GameManager {
       this.local_player = newPlayer;
       this.camera.follow(newPlayer);
     }
-
-    player.listen("position", (value: any, previousValue: number[]) => {
-      newPlayer.setCachedPositionX(value.x);
-      newPlayer.setCachedPositionY(value.y);
-    });
-
+    else {
+      player.listen("position", (value: any, previousValue: number[]) => {
+        newPlayer.setCachedPositionX(value.x);
+        newPlayer.setCachedPositionY(value.y);
+      });
+    }
   }
 
   private playerLeaveListener(player: any, key: any) {
@@ -109,7 +118,18 @@ export class GameManager {
 
 
   tick(time: Ticker) {
+    let he = Math.floor(time.lastTime / (1000 / 20));
+    if (he > this.nLastTime) {
+      this.nLastTime = he;
+      console.log("Time: ", he);
+
+      this.sessionController.sendPosition(this.local_player!.position);
+    }
+
     this.players.forEach((player) => {
+      console.log(player.sessionId);
+      console.log(this.local_player?.sessionId);
+      console.log(player.sessionId !== this.local_player?.sessionId);
       if (player.sessionId !== this.local_player?.sessionId) {
         player.interpolate(0.25);
         // console.log(player.position);
@@ -123,23 +143,23 @@ export class GameManager {
       const key = keyVal as Key;
       if (this.local_player !== null) {
         if (this.controller?.keys[key].pressed) {
-          console.log(this.players);
+          // console.log(this.players);
           switch (key) {
             case Key.UP:
               this.local_player.y -= PLAYER_SPEED * time.deltaTime;
-              this.sessionController.sendPosition(this.local_player.position);
+              // this.sessionController.sendPosition(this.local_player.position);
               break;
             case Key.DOWN:
               this.local_player.y += PLAYER_SPEED * time.deltaTime;
-              this.sessionController.sendPosition(this.local_player.position);
+              // this.sessionController.sendPosition(this.local_player.position);
               break;
             case Key.LEFT:
               this.local_player.x -= PLAYER_SPEED * time.deltaTime;
-              this.sessionController.sendPosition(this.local_player.position);
+              // this.sessionController.sendPosition(this.local_player.position);
               break;
             case Key.RIGHT:
               this.local_player.x += PLAYER_SPEED * time.deltaTime;
-              this.sessionController.sendPosition(this.local_player.position);
+              // this.sessionController.sendPosition(this.local_player.position);
               break;
             case Key.Q:
               break;
