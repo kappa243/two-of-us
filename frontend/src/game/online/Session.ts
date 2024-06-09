@@ -41,6 +41,7 @@ export class Session {
 
 
   send(type: string | number, message?: any) {
+    // create async send
     this.room?.send(type, message);
   }
 
