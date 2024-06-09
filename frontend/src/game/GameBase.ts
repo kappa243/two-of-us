@@ -21,9 +21,9 @@ export class GameBase {
    */
   async preload() {
     const assets = [
-      { alias: "bunny", src: "https://pixijs.com/assets/bunny.png" },
-      { alias: "eggHead", src: "https://pixijs.com/assets/eggHead.png" },
-      { alias: "flowerTop", src: "https://pixijs.com/assets/flowerTop.png" }
+      { alias: "red", src: "assets/red.png" },
+      { alias: "map", src: "assets/map.png"},
+      { alias: "map_above", src: "assets/map_above.png"},
     ];
 
     await Assets.load(assets);
@@ -42,7 +42,6 @@ export class GameBase {
 
     this.sessionController = new SessionController(this.session);
     this.gameManager = new GameManager(this.app, this.sessionController, this.controller, this.camera);
-    // this.gameManager.registerListeners();
 
 
     this.app.ticker.add((time) => {

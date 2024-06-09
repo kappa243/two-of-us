@@ -7,7 +7,7 @@ import { Application, ApplicationOptions, Renderer } from "pixi.js";
 import { useEffect, useRef } from "react";
 
 const options: Partial<ApplicationOptions> = {
-  background: "#1099bb"
+  background: "#000000"
 };
 
 const Game = () => {

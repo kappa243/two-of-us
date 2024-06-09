@@ -16,7 +16,8 @@ export class Player extends Entity {
     this.sessionId = sessionId;
     this.messageDataPlayer = new MessageDataPlayer(playerName, characterType);
 
-    this.cachedPosition = this.position.clone();
+    this.cachedPosition = new Point();
+    this.cachedPosition.copyFrom(this.position);
   }
 
   private step(percentage: number, min: number, max: number) {
