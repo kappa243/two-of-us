@@ -1,9 +1,32 @@
 import { MAP_BOTTOM_Y, MAP_TOP_Y, PLAYER_SPEED } from "@/config";
-import { Application, Container, Sprite, Ticker } from "pixi.js";
+import { Application, Container, Point, Sprite, Ticker } from "pixi.js";
 import { Camera } from "./Camera";
 import { Key, KeyboardController } from "./controls/KeyboardController";
 import { Player } from "./objects/Player";
 import { SessionController } from "./online/SessionController";
+
+// TODO move to movement class
+
+const UP_VECTOR = new Point(0, -1);
+const DOWN_VECTOR = new Point(0, 1);
+const LEFT_VECTOR = new Point(-1, 0);
+const RIGHT_VECTOR = new Point(1, 0);
+
+const sum_vectors = (v1: Point, v2: Point) => {
+  return new Point(v1.x + v2.x, v1.y + v2.y);
+};
+
+const normalize_vector = (v: Point) => {
+  let length = Math.sqrt(v.x * v.x + v.y * v.y);
+  if (length === 0) {
+    return new Point(0, 0);
+  }
+  return new Point(v.x / length, v.y / length);
+};
+
+const multiply_vector = (v: Point, scalar: number) => {
+  return new Point(v.x * scalar, v.y * scalar);
+};
 
 
 export class GameManager {
@@ -118,7 +141,7 @@ export class GameManager {
 
 
   tick(time: Ticker) {
-    let he = Math.floor(time.lastTime / (1000 / 20));
+    let he = Math.floor(time.lastTime / (1000 / 60));
     if (he > this.nLastTime) {
       this.nLastTime = he;
       // console.log("Time: ", he);
@@ -136,8 +159,9 @@ export class GameManager {
       }
     });
 
-
+    
     // for every Key values change player position
+    let mov_vec = new Point(0, 0);
 
     Object.values(Key).filter(v => typeof v === "number").forEach(keyVal => {
       const key = keyVal as Key;
@@ -146,27 +170,31 @@ export class GameManager {
           // console.log(this.players);
           switch (key) {
             case Key.UP:
-              this.local_player.y -= PLAYER_SPEED * time.deltaTime;
-              // this.sessionController.sendPosition(this.local_player.position);
+              mov_vec = sum_vectors(mov_vec, UP_VECTOR);
               break;
             case Key.DOWN:
-              this.local_player.y += PLAYER_SPEED * time.deltaTime;
-              // this.sessionController.sendPosition(this.local_player.position);
+              mov_vec = sum_vectors(mov_vec, DOWN_VECTOR);
               break;
             case Key.LEFT:
-              this.local_player.x -= PLAYER_SPEED * time.deltaTime;
-              // this.sessionController.sendPosition(this.local_player.position);
+              mov_vec = sum_vectors(mov_vec, LEFT_VECTOR);
               break;
             case Key.RIGHT:
-              this.local_player.x += PLAYER_SPEED * time.deltaTime;
-              // this.sessionController.sendPosition(this.local_player.position);
-              break;
+              mov_vec = sum_vectors(mov_vec, RIGHT_VECTOR);
             case Key.Q:
               break;
           }
         }
       }
     });
+
+    mov_vec = normalize_vector(mov_vec);
+    mov_vec = multiply_vector(mov_vec, PLAYER_SPEED * time.deltaTime);
+
+    if (this.local_player !== null) {
+      this.local_player.x += mov_vec.x;
+      this.local_player.y += mov_vec.y;
+      this.sessionController.sendPosition(this.local_player.position);
+    }
 
   }
 
