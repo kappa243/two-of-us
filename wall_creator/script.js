@@ -22,7 +22,7 @@ canvas.addEventListener('mousedown', (event) => {
         walls.push([start, end]);
         start = null;
         end = null;
-        redoStack = [];  // Czyszczenie stosu ponawiania przy każdym nowym rysowaniu
+        redoStack = [];
         drawWalls();
     }
 });
@@ -58,11 +58,10 @@ function drawWalls() {
         ctx.beginPath();
         ctx.moveTo(wall[0].x, wall[0].y);
         ctx.lineTo(wall[1].x, wall[1].y);
-        ctx.strokeStyle = 'red';  // Ustawienie koloru linii na czerwony
+        ctx.strokeStyle = 'red';
         ctx.stroke();
     });
 
-    // Narysuj aktualnie rysowaną linię (podgląd)
     if (start !== null && end !== null) {
         ctx.beginPath();
         ctx.moveTo(start.x, start.y);
@@ -79,7 +78,6 @@ function saveCoordinatesToFile() {
         coordinatesText += `(${wall[0].x}, ${wall[0].y}) to (${wall[1].x}, ${wall[1].y})\n`;
     });
 
-    // Utwórz element do pobrania pliku
     const element = document.createElement('a');
     element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(coordinatesText));
     element.setAttribute('download', 'wall_coordinates.txt');
@@ -87,7 +85,6 @@ function saveCoordinatesToFile() {
     element.style.display = 'none';
     document.body.appendChild(element);
 
-    // Kliknij w element aby zainicjować pobieranie
     element.click();
 
     document.body.removeChild(element);
