@@ -1,7 +1,13 @@
 const canvas = document.getElementById('mapCanvas');
 const ctx = canvas.getContext('2d');
-canvas.width = 6045;
+canvas.width = 6046;
 canvas.height = 3500;
+
+const backgroundImage = new Image();
+backgroundImage.onload = function() {
+    ctx.drawImage(backgroundImage, 0, 0, canvas.width, canvas.height);
+};
+backgroundImage.src = 'background.png';
 
 let start = null;
 let end = null;
@@ -10,8 +16,8 @@ let redoStack = [];
 
 canvas.addEventListener('mousedown', (event) => {
     const rect = canvas.getBoundingClientRect();
-    const x = event.clientX - rect.left;
-    const y = event.clientY - rect.top;
+    const x = Math.round(event.clientX - rect.left);
+    const y = Math.round(event.clientY - rect.top);
 
     if (start === null) {
         start = { x, y };
@@ -54,6 +60,7 @@ function drawPreview(event) {
 
 function drawWalls() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(backgroundImage, 0, 0, canvas.width, canvas.height);
     walls.forEach(wall => {
         ctx.beginPath();
         ctx.moveTo(wall[0].x, wall[0].y);
@@ -75,7 +82,7 @@ function saveCoordinatesToFile() {
     let coordinatesText = "";
 
     walls.forEach((wall) => {
-        coordinatesText += `(${wall[0].x}, ${wall[0].y}) to (${wall[1].x}, ${wall[1].y})\n`;
+        coordinatesText += `new Wall(new Point(${wall[0].x - canvas.width / 2}, ${wall[0].y - canvas.height / 2}), new Point(${wall[1].x - canvas.width / 2}, ${wall[1].y - canvas.height / 2})),\n`;
     });
 
     const element = document.createElement('a');

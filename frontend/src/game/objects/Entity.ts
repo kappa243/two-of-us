@@ -7,6 +7,10 @@ export class Entity implements IFollowable<Point>, Observer<ObservablePoint> {
 
   private sprite!: Sprite;
   private _position: ObservablePoint;
+  private _widthLeft: number = 65;
+  private _widthRight: number = 50;
+  private _heightTop: number = -30;
+  private _heightBottom: number = 50;
 
   constructor(){
     this.sprite = Sprite.from("red"); // will be replaced by smart assets
@@ -82,4 +86,21 @@ export class Entity implements IFollowable<Point>, Observer<ObservablePoint> {
     container.removeChild(this.sprite);
   }
 
+
+  get widthLeft(): number {
+    return this._widthLeft;
+  }
+
+  get widthRight(): number {
+    return this._widthRight;
+  }
+
+
+  get heightTop(): number {
+    return this._heightTop;
+  }
+
+  get heightBottom(): number {
+    return this._heightBottom;
+  }
 }
