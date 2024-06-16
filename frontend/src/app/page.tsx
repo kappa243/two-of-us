@@ -1,7 +1,7 @@
-import Game from "@/app/game";
+import GameWithNoSSR from "./gamenossr";
 
 export default function Root() {
   return (
-    <Game />
+    <GameWithNoSSR />
   );
 }

@@ -5,12 +5,12 @@ import { IFollower } from "./utils/followers/IFollower";
 export class Entity implements IFollowable<Point>, Observer<ObservablePoint> {
   protected followers: Set<IFollower<Point>> = new Set();
 
-  private sprite!: Sprite;
+  protected sprite!: Sprite;
   private _position: ObservablePoint;
 
   constructor(){
-    this.sprite = Sprite.from("red"); // will be replaced by smart assets
-    this.sprite.scale.set(0.03);
+    this.sprite = Sprite.from("player"); // will be replaced by smart assets
+    this.sprite.scale.set(0.5);
     this.sprite.anchor.set(0.5);
 
     this._position = new ObservablePoint(this, 0, 0);

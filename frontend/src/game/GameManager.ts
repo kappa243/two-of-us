@@ -104,12 +104,13 @@ export class GameManager {
   registerListeners() {
     this.sessionController.playerJoinListener(this.playerJoinListener.bind(this));
     this.sessionController.playerLeftListener(this.playerLeaveListener.bind(this));
+    this.sessionController.playerSideChanged(this.playerSideChanged.bind(this));
 
     this.sessionController.init();
   }
 
   private playerJoinListener(player: any, key: any) {
-    let newPlayer = new Player(key, player.messageDataPlayer.sessionId, player.messageDataPlayer.characterType);
+    let newPlayer = new Player(key, player.color, player.messageDataPlayer.sessionId, player.messageDataPlayer.characterType);
 
     newPlayer.x = player.position.x;
     newPlayer.y = player.position.y;
@@ -127,6 +128,10 @@ export class GameManager {
         newPlayer.setCachedPositionX(value.x);
         newPlayer.setCachedPositionY(value.y);
       });
+
+      player.listen("side", (value: any, previousValue: number[]) => {
+        newPlayer.setSide(value);
+      });
     }
   }
 
@@ -139,6 +144,11 @@ export class GameManager {
     this.players.delete(key);
   }
 
+  private playerSideChanged(player: any, key: any){
+    let playerInstance = this.players.get(key);
+
+    playerInstance?.setSide(player.side);
+  }
 
   tick(time: Ticker) {
     let he = Math.floor(time.lastTime / (1000 / 60));
@@ -151,7 +161,7 @@ export class GameManager {
 
     this.players.forEach((player) => {
       // console.log(player.sessionId);
-      console.log(this.local_player?.position);
+      // console.log(this.local_player?.position);
       // console.log(player.sessionId !== this.local_player?.sessionId);
       if (player.sessionId !== this.local_player?.sessionId) {
         player.interpolate(0.25);
@@ -194,6 +204,15 @@ export class GameManager {
       this.local_player.x += mov_vec.x;
       this.local_player.y += mov_vec.y;
       this.sessionController.sendPosition(this.local_player.position);
+
+      // flip player based on movement direction
+      if (mov_vec.x < 0) {
+        this.local_player.setSide(-1);
+        this.sessionController.sendSide(-1);
+      } else if (mov_vec.x > 0) {
+        this.local_player.setSide(1);
+        this.sessionController.sendSide(1);
+      }
     }
 
   }

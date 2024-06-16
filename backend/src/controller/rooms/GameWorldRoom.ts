@@ -32,6 +32,14 @@ export class GameWorldRoom extends Room<GameWorldRoomState> {
       // playerState.position.x = message.x;
     });
 
+    this.onMessage("movementSide", (client: any, message: any) => {
+      // console.log("Player input has arrived! ", message);
+      let playerState = this.state.players.get(client.sessionId);
+      // player.inputQueue.push(message);
+      playerState.side = message.side;
+      // playerState.position.x = message.x;
+    });
+
     // this.onMessage("players", (client: any, message: any) => {
     // console.log("Message 3001 has arrived!", message);
     // console.log("Q: ", this.state.players.size);
@@ -58,12 +66,25 @@ export class GameWorldRoom extends Room<GameWorldRoomState> {
 
   }
  
+  private getFreeColor(players: Map<string, PlayerState>): number {
+    let colors = new Set<number>([0, 1, 2, 3, 4]);
+    players.forEach((player: PlayerState) => {
+      colors.delete(player.color);
+    });
+
+    return colors.values().next().value;
+  }
+
+
   onJoin(client: Client, options: any) {
     console.log(client.sessionId, "joined!");
     // this.state.players.set(client.sessionId, new Player(client.sessionId));
     // console.log("Message init has arrived! ", message);
     let messageDataPlayer = new MessageDataPlayer("dsf", 1);
-    let ps = new PlayerState(client.sessionId, messageDataPlayer);
+
+    let color = this.getFreeColor(this.state.players);
+
+    let ps = new PlayerState(client.sessionId, messageDataPlayer, color);
     // console.log("player pos: ", ps.position.x," ", ps.position.y);
     this.state.players.set(client.sessionId, ps);
 
