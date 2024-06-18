@@ -25,6 +25,7 @@ export class PlayerState extends Schema {
     
     @type("number") side: number = -1;
     @type("number") color: number = 0;
+    @type("boolean") isMoving: boolean = false;
 
     // @type("number") x: number = getRandomInt(300);
     // @type("number") y: number = getRandomInt(300);

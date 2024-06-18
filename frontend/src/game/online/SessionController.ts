@@ -49,4 +49,8 @@ export class SessionController {
     this.session.send("movementSide", { "side": side});
   }
 
+  sendMoving(isMoving: boolean) {
+    this.session.send("isMoving", { "isMoving": isMoving });
+  }
+
 }

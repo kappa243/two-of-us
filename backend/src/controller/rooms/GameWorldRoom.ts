@@ -33,11 +33,13 @@ export class GameWorldRoom extends Room<GameWorldRoomState> {
     });
 
     this.onMessage("movementSide", (client: any, message: any) => {
-      // console.log("Player input has arrived! ", message);
       let playerState = this.state.players.get(client.sessionId);
-      // player.inputQueue.push(message);
       playerState.side = message.side;
-      // playerState.position.x = message.x;
+    });
+
+    this.onMessage("isMoving", (client: any, message: any) => {
+      let playerState = this.state.players.get(client.sessionId);
+      playerState.isMoving = message.isMoving;
     });
 
     // this.onMessage("players", (client: any, message: any) => {

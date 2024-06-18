@@ -8,6 +8,8 @@ export class Entity implements IFollowable<Point>, Observer<ObservablePoint> {
   protected sprite!: Sprite;
   private _position: ObservablePoint;
 
+  private isMoving: boolean = false;
+
   constructor(){
     this.sprite = Sprite.from("player"); // will be replaced by smart assets
     this.sprite.scale.set(0.5);
@@ -33,6 +35,19 @@ export class Entity implements IFollowable<Point>, Observer<ObservablePoint> {
 
   unsubscribe(follower: IFollower<Point>): void {
     this.followers.delete(follower);
+  }
+
+
+  set moving(value: boolean) {
+    this.isMoving = value;
+  }
+
+  get moving() {
+    return this.isMoving;
+  }
+
+  setMoving(value: boolean) {
+    this.isMoving = value;
   }
 
 

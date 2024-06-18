@@ -28,6 +28,10 @@ const multiply_vector = (v: Point, scalar: number) => {
   return new Point(v.x * scalar, v.y * scalar);
 };
 
+const length_vector = (v: Point) => {
+  return Math.sqrt(v.x * v.x + v.y * v.y);
+};
+
 
 export class GameManager {
   private app: Application;
@@ -132,6 +136,10 @@ export class GameManager {
       player.listen("side", (value: any, previousValue: number[]) => {
         newPlayer.setSide(value);
       });
+
+      player.listen("isMoving", (value: any, previousValue: boolean) => {
+        newPlayer.setMoving(value);
+      });
     }
   }
 
@@ -150,22 +158,26 @@ export class GameManager {
     playerInstance?.setSide(player.side);
   }
 
+  private playerMoveListener(player: any, key: any) {
+    let playerInstance = this.players.get(key);
+
+    playerInstance?.setMoving(player.isMoving);
+  }
+
   tick(time: Ticker) {
-    let he = Math.floor(time.lastTime / (1000 / 60));
+    let he = Math.floor(time.lastTime / (1000 / 144));
     if (he > this.nLastTime) {
       this.nLastTime = he;
-      // console.log("Time: ", he);
 
       this.sessionController.sendPosition(this.local_player!.position);
     }
 
     this.players.forEach((player) => {
-      // console.log(player.sessionId);
-      // console.log(this.local_player?.position);
-      // console.log(player.sessionId !== this.local_player?.sessionId);
+      if (player.moving)
+        console.log(player.sessionId, player.moving);
+
       if (player.sessionId !== this.local_player?.sessionId) {
         player.interpolate(0.25);
-        // console.log(player.position);
       }
     });
 
@@ -203,7 +215,22 @@ export class GameManager {
     if (this.local_player !== null) {
       this.local_player.x += mov_vec.x;
       this.local_player.y += mov_vec.y;
+
       this.sessionController.sendPosition(this.local_player.position);
+
+      if (!this.local_player.moving){
+        if (length_vector(mov_vec) > 0.01){
+          this.local_player.moving = true;
+          this.sessionController.sendMoving(true);
+        }
+      } else {
+        if (length_vector(mov_vec) < 0.01){
+          this.local_player.moving = false;
+          this.sessionController.sendMoving(false);
+        }
+      }
+
+      
 
       // flip player based on movement direction
       if (mov_vec.x < 0) {
