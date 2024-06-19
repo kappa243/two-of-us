@@ -1,0 +1,121 @@
+{
+  "frames": {
+    "walk-1": {
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 172,
+        "h": 236
+      },
+      "duration": 100
+    },
+    "walk-2": {
+      "frame": {
+        "x": 172,
+        "y": 0,
+        "w": 172,
+        "h": 236
+      },
+      "duration": 100
+    },
+    "walk-3": {
+      "frame": {
+        "x": 344,
+        "y": 0,
+        "w": 172,
+        "h": 236
+      },
+      "duration": 100
+    },
+    "walk-4": {
+      "frame": {
+        "x": 516,
+        "y": 0,
+        "w": 172,
+        "h": 236
+      },
+      "duration": 100
+    },
+    "walk-5": {
+      "frame": {
+        "x": 688,
+        "y": 0,
+        "w": 172,
+        "h": 236
+      },
+      "duration": 100
+    },
+    "walk-6": {
+      "frame": {
+        "x": 860,
+        "y": 0,
+        "w": 172,
+        "h": 236
+      },
+      "duration": 100
+    },
+    "walk-7": {
+      "frame": {
+        "x": 1032,
+        "y": 0,
+        "w": 172,
+        "h": 236
+      },
+      "duration": 100
+    },
+    "walk-8": {
+      "frame": {
+        "x": 1204,
+        "y": 0,
+        "w": 172,
+        "h": 236
+      },
+      "duration": 100
+    },
+    "walk-9": {
+      "frame": {
+        "x": 1376,
+        "y": 0,
+        "w": 172,
+        "h": 236
+      },
+      "duration": 100
+    },
+    "walk-10": {
+      "frame": {
+        "x": 1548,
+        "y": 0,
+        "w": 172,
+        "h": 236
+      },
+      "duration": 100
+    },
+    "walk-11": {
+      "frame": {
+        "x": 1720,
+        "y": 0,
+        "w": 172,
+        "h": 236
+      },
+      "duration": 100
+    },
+    "walk-12": {
+      "frame": {
+        "x": 1892,
+        "y": 0,
+        "w": 172,
+        "h": 236
+      },
+      "duration": 100
+    }
+  },
+  "meta": {
+    "app": "https://www.codeandweb.com/texturepacker",
+    "scale": 1,
+    "image": "walk.png",
+    "size": {
+      "w": 2064,
+      "h": 236
+    }
+  }
+}

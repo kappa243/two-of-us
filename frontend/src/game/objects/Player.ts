@@ -8,7 +8,6 @@ export class Player extends Entity {
   readonly sessionId: string;
   private messageDataPlayer: MessageDataPlayer;
 
-
   private cachedPosition: Point;
 
   // transform to common schema player state
@@ -124,7 +123,9 @@ export class Player extends Entity {
         break;
     }
 
-    this.sprite.filters = [filterGreen1, filterGreen2, filterRedBlue1, filterRedBlue2, filterRedBlue3, filterRed1, filterRed2, filterBlue1, filterBlue2];
+    const filters = [filterGreen1, filterGreen2, filterRedBlue1, filterRedBlue2, filterRedBlue3, filterRed1, filterRed2, filterBlue1, filterBlue2];
+    this.anim.filters = filters;
+    this.sprite.filters = filters;
 
   }
 
@@ -135,6 +136,7 @@ export class Player extends Entity {
 
   setSide(side: number) {
     this.sprite.scale.x = Math.abs(this.sprite.scale.x) * side;
+    this.anim.scale.x = Math.abs(this.anim.scale.x) * side;
   }
 
   interpolate(percentage: number) {

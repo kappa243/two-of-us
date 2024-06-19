@@ -109,6 +109,7 @@ export class GameManager {
     this.sessionController.playerJoinListener(this.playerJoinListener.bind(this));
     this.sessionController.playerLeftListener(this.playerLeaveListener.bind(this));
     this.sessionController.playerSideChanged(this.playerSideChanged.bind(this));
+    this.sessionController.playerMoveListener(this.playerMoveListener.bind(this));
 
     this.sessionController.init();
   }
@@ -220,12 +221,12 @@ export class GameManager {
 
       if (!this.local_player.moving){
         if (length_vector(mov_vec) > 0.01){
-          this.local_player.moving = true;
+          this.local_player.setMoving(true);
           this.sessionController.sendMoving(true);
         }
       } else {
         if (length_vector(mov_vec) < 0.01){
-          this.local_player.moving = false;
+          this.local_player.setMoving(false);
           this.sessionController.sendMoving(false);
         }
       }
