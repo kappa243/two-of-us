@@ -37,8 +37,24 @@ export class SessionController {
     this.room.state.players.onRemove(callback, false);
   }
 
+  playerSideChanged(callback: (player: any, key: any) => void) {
+    this.room.state.players.onChange = callback;
+  }
+
+  playerMoveListener(callback: (player: any, key: any) => void) {
+    this.room.state.players.onChange = callback;
+  }
+
   sendPosition(point: Point) {
     this.session.send("movementInput", { "x": point.x, "y": point.y });
+  }
+
+  sendSide(side: number) {
+    this.session.send("movementSide", { "side": side});
+  }
+
+  sendMoving(isMoving: boolean) {
+    this.session.send("isMoving", { "isMoving": isMoving });
   }
 
 }

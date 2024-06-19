@@ -1,4 +1,5 @@
 import { MAP_BOTTOM_Y, MAP_TOP_Y, PLAYER_SPEED } from "@/config";
+import { Sound } from "@pixi/sound";
 import { Application, Container, Point, Sprite, Ticker } from "pixi.js";
 import { Camera } from "./Camera";
 import { Key, KeyboardController } from "./controls/KeyboardController";
@@ -32,6 +33,10 @@ const multiply_vector = (v: Point, scalar: number) => {
   return new Point(v.x * scalar, v.y * scalar);
 };
 
+const length_vector = (v: Point) => {
+  return Math.sqrt(v.x * v.x + v.y * v.y);
+};
+
 
 export class GameManager {
   private app: Application;
@@ -53,6 +58,9 @@ export class GameManager {
 
   private nLastTime: number = 0;
 
+  private sLastTime: number = 0;
+  private walkSounds: any;
+
   constructor(app: Application, sessionController: SessionController, controller: KeyboardController, camera: Camera) {
     this.app = app;
     this.sessionController = sessionController;
@@ -65,6 +73,12 @@ export class GameManager {
     this.players = new Map<string, Player>();
 
     this.registerListeners();
+
+    this.walkSounds = [
+      Sound.from("assets/sound/among_walk_1.mp3"),
+      Sound.from("assets/sound/among_walk_2.mp3"),
+      Sound.from("assets/sound/among_walk_3.mp3")
+    ];
   }
 
   private setupContainers() {
@@ -119,12 +133,14 @@ export class GameManager {
   registerListeners() {
     this.sessionController.playerJoinListener(this.playerJoinListener.bind(this));
     this.sessionController.playerLeftListener(this.playerLeaveListener.bind(this));
+    this.sessionController.playerSideChanged(this.playerSideChanged.bind(this));
+    this.sessionController.playerMoveListener(this.playerMoveListener.bind(this));
 
     this.sessionController.init();
   }
 
   private playerJoinListener(player: any, key: any) {
-    let newPlayer = new Player(key, player.messageDataPlayer.sessionId, player.messageDataPlayer.characterType);
+    let newPlayer = new Player(key, player.color, player.messageDataPlayer.sessionId, player.messageDataPlayer.characterType);
 
     newPlayer.x = player.position.x;
     newPlayer.y = player.position.y;
@@ -141,6 +157,14 @@ export class GameManager {
         newPlayer.setCachedPositionX(value.x);
         newPlayer.setCachedPositionY(value.y);
       });
+
+      player.listen("side", (value: any, previousValue: number[]) => {
+        newPlayer.setSide(value);
+      });
+
+      player.listen("isMoving", (value: any, previousValue: boolean) => {
+        newPlayer.setMoving(value);
+      });
     }
   }
 
@@ -153,23 +177,30 @@ export class GameManager {
     this.players.delete(key);
   }
 
+  private playerSideChanged(player: any, key: any){
+    let playerInstance = this.players.get(key);
+
+    playerInstance?.setSide(player.side);
+  }
+
+  private playerMoveListener(player: any, key: any) {
+    let playerInstance = this.players.get(key);
+
+    playerInstance?.setMoving(player.isMoving);
+  }
 
   tick(time: Ticker) {
-    let he = Math.floor(time.lastTime / (1000 / 60));
+    let he = Math.floor(time.lastTime / (1000 / 144));
     if (he > this.nLastTime) {
       this.nLastTime = he;
-      // console.log("Time: ", he);
 
       this.sessionController.sendPosition(this.local_player!.position);
     }
 
     this.players.forEach((player) => {
-      // console.log(player.sessionId);
-      console.log(this.local_player?.position);
-      // console.log(player.sessionId !== this.local_player?.sessionId);
+
       if (player.sessionId !== this.local_player?.sessionId) {
         player.interpolate(0.25);
-        // console.log(player.position);
       }
     });
 
@@ -208,7 +239,43 @@ export class GameManager {
     if (this.local_player !== null && !this.checkCollision(this.local_player, mov_vec)) {
       this.local_player.x += mov_vec.x;
       this.local_player.y += mov_vec.y;
+
       this.sessionController.sendPosition(this.local_player.position);
+
+      if (!this.local_player.moving){
+        if (length_vector(mov_vec) > 0.01){
+          this.local_player.setMoving(true);
+          this.sessionController.sendMoving(true);
+        }
+      } else {
+        // player sound every second
+        const ss = Math.floor(time.lastTime);
+
+        if (Math.abs(ss - this.sLastTime) > 1200 / 4){
+          this.sLastTime = ss;
+
+          let sound = this.walkSounds[Math.floor(Math.random() * this.walkSounds.length)];
+          sound.play();
+        }
+
+        if (length_vector(mov_vec) < 0.01){
+          this.local_player.setMoving(false);
+          this.sessionController.sendMoving(false);
+
+          this.sLastTime = 0;
+        }
+      }
+
+      
+
+      // flip player based on movement direction
+      if (mov_vec.x < 0) {
+        this.local_player.setSide(-1);
+        this.sessionController.sendSide(-1);
+      } else if (mov_vec.x > 0) {
+        this.local_player.setSide(1);
+        this.sessionController.sendSide(1);
+      }
     }
   }
 

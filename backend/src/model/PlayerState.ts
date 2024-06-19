@@ -1,5 +1,5 @@
-import { Schema, type, ArraySchema } from "@colyseus/schema";
-import { MessageDataPlayer, getRandomInt } from "./MessageDataPlayer";
+import { Schema, type } from "@colyseus/schema";
+import { MessageDataPlayer } from "./MessageDataPlayer";
 
 export enum InputType {
   UP = 0,
@@ -22,15 +22,21 @@ export class PlayerState extends Schema {
     @type("string") connectionId: string;
     // @type([ "number" ]) position: ArraySchema<number> = new ArraySchema<number>(getRandomInt(300), getRandomInt(300));
     @type(Pos) position: Pos = new Pos(400, 0);
+    
+    @type("number") side: number = -1;
+    @type("number") color: number = 0;
+    @type("boolean") isMoving: boolean = false;
+
     // @type("number") x: number = getRandomInt(300);
     // @type("number") y: number = getRandomInt(300);
     @type(MessageDataPlayer) messageDataPlayer: MessageDataPlayer;
     inputQueue: InputType[] = [];
 
-    constructor(connectionId: string, messageDataPlayer: MessageDataPlayer){
+    constructor(connectionId: string, messageDataPlayer: MessageDataPlayer, color: number){
       super();
       this.connectionId = connectionId;
       this.messageDataPlayer = messageDataPlayer;
+      this.color = color;
     }
 
 }
