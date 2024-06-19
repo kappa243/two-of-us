@@ -143,7 +143,7 @@ export class GameBase {
     console.log("Time to render light: ", endTime - startTime, "ms");
 
     let segment2: number[] = [];
-    let hiddenSpaces = new Graphics().rect(0, 0, this.SCREEN_WIDTH, this.SCREEN_HEIGHT).fill({ color: 0xff0000, alpha: 0.5 });
+    let hiddenSpaces = new Graphics().rect(-100, -100, this.SCREEN_WIDTH+200, this.SCREEN_HEIGHT+200).fill({ color: 0xff0000, alpha: 0.5 });
 
     this.mLight.outputPolygon.forEach((point) => {
       let toAdd = true;
@@ -196,7 +196,6 @@ export class GameBase {
     // hiddenSpaces.circle(x, y, 20).cut();
 
     // const lightPolygon2 = new Graphics().poly(segment2).fill({ color: "white", alpha: 0.5 });
-
     hiddenSpaces.poly(segment2).cut();
     if (visionContainer.children.length > 0) {
       console.log("visionContainer size: ", visionContainer.children.length)
