@@ -1,4 +1,4 @@
-import { Application, Assets, BlurFilter, Container, Graphics, Rectangle, Sprite, Text } from "pixi.js";
+import { Application, Assets, BlurFilter, Container, Graphics, Rectangle, Sprite, Text, closePointEps } from "pixi.js";
 import { Camera } from "./Camera";
 import { Controller, Key } from "./Controller";
 import { FollowableBunny } from "./FollowableBunny";
@@ -56,9 +56,9 @@ export class GameBase {
   }
 
   generateMap() {
-    let map_layout = [];
-    for (let i = 20; i <= this.SCREEN_WIDTH; i += 200) {
-      for (let j = 20; j <= this.SCREEN_HEIGHT; j += 200) {
+    let map_layout = [[this.SCREEN_WIDTH, 0, 0, 0], [this.SCREEN_WIDTH, this.SCREEN_HEIGHT, this.SCREEN_WIDTH, 0], [0, this.SCREEN_HEIGHT, this.SCREEN_WIDTH, this.SCREEN_HEIGHT], [0, 0, 0, this.SCREEN_HEIGHT]]; //[[100, 100, 120, 100], [300, 300, 350, 300], [200, 250, 250, 300]];
+    for (let i = 20; i <= this.SCREEN_WIDTH; i += 300) {
+      for (let j = 20; j <= this.SCREEN_HEIGHT; j += 300) {
         map_layout.push([i, j, i + this.getRandomInt(70), j + this.getRandomInt(70)]);
       }
     }
@@ -143,17 +143,68 @@ export class GameBase {
     console.log("Time to render light: ", endTime - startTime, "ms");
 
     let segment2: number[] = [];
-    this.mLight.outputPolygon.forEach((point) => {
-      segment2.push(point[0]);
-      segment2.push(point[1]);
-    });
+    let hiddenSpaces = new Graphics().rect(0, 0, this.SCREEN_WIDTH, this.SCREEN_HEIGHT).fill({ color: 0xff0000, alpha: 0.5 });
 
-    const lightPolygon2 = new Graphics().poly(segment2).fill({ color: "white", alpha: 0.5 });
+    this.mLight.outputPolygon.forEach((point) => {
+      let toAdd = true;
+      // this.mLight.borders.forEach(borderPoint => {
+      //   if (point[0] == borderPoint[0] && point[1] == borderPoint[1]) {
+      //       toAdd = false;
+      //       return;
+      //   }
+      // });
+      // if (toAdd){
+        // if (segment2.length > 1){
+        //   let prevx = segment2[segment2.length-2];
+        //   let prevy = segment2[segment2.length-1];
+        //   hiddenSpaces.beginPath();
+        //   hiddenSpaces.moveTo(point[0], point[1]);
+        //   hiddenSpaces.lineTo(prevx, prevy);
+        //   hiddenSpaces.lineTo(x, y);
+        //   hiddenSpaces.lineTo(point[0], point[1]);
+        //   hiddenSpaces.closePath();
+        //   hiddenSpaces.fill(0xff0000);
+          
+        //   // hiddenSpaces.cut()
+        // }
+
+        // hiddenSpaces.circle(point[0], point[1], 2).fill({ color: 0xfff000 });
+        segment2.push(point[0]);
+        segment2.push(point[1]);
+        // hiddenSpaces = hiddenSpaces.;
+      
+    });
+    console.log(segment2.length);
+    console.log(segment2);
+    segment2.push(segment2[0]);
+    segment2.push(segment2[1]);
+    // remove triagle from hiddenSpaces
+
+    // let prevx = segment2[segment2.length-2];
+    // let prevy = segment2[segment2.length-1];
+    // let firstx = segment2[0];
+    // let firsty = segment2[1];
+    // // hiddenSpaces.beginFill(0x000000);
+    // hiddenSpaces.moveTo(firstx, firsty);
+    // hiddenSpaces.lineTo(prevx, prevy);
+    // hiddenSpaces.lineTo(x, y);
+    // hiddenSpaces.lineTo(firstx, firsty);
+    // hiddenSpaces.closePath();
+    // hiddenSpaces.fill(0xff0000);
+    // hiddenSpaces.endFill();
+    // hiddenSpaces.cut()
+    // hiddenSpaces.circle(x, y, 20).cut();
+
+    // const lightPolygon2 = new Graphics().poly(segment2).fill({ color: "white", alpha: 0.5 });
+
+    hiddenSpaces.poly(segment2).cut();
     if (visionContainer.children.length > 0) {
+      console.log("visionContainer size: ", visionContainer.children.length)
       visionContainer.removeChildAt(visionContainer.children.length - 1);
     }
     // visionContainer.removeChildAt(visionContainer.children.length - 1);
-    visionContainer.addChild(lightPolygon2);
+    // visionContainer.addChild(lightPolygon2);
+    visionContainer.addChild(hiddenSpaces);
 
     // hiddenContainer.addChild(myPosition);
   }
@@ -202,9 +253,9 @@ export class GameBase {
     hiddenContainer.zIndex = 100;
     this.app.stage.addChild(hiddenContainer);
 
-    let visionMask = new Graphics().circle(this.app.screen.width / 2 + 0, this.app.screen.height / 2 + 0, radius).fill({ color: 0xffffff, alpha: 0.5 });
+    let visionMask = new Graphics().circle(this.app.screen.width / 2 + 0, this.app.screen.height / 2 + 0, radius+10).fill({ color: 0xffffff, alpha: 0.5 });
     const visionContainer = new Container();
-    visionContainer.mask = visionMask;
+    // visionContainer.mask = visionMask;
 
     const obstacleContainer = new Container();
     this.camera.container.addChild(obstacleContainer);
@@ -214,7 +265,7 @@ export class GameBase {
 
     const darkenLayer = new Graphics().rect(0, 0, this.app.screen.width + 0, this.app.screen.height + 0).fill({ color: 0x000000, alpha: 0.5 });
 
-    hiddenContainer.addChild(darkenLayer);
+    // hiddenContainer.addChild(darkenLayer);
 
     const maskDarkLayer = new Graphics()
       .rect(-shiftEdges, -shiftEdges, this.app.screen.width + 2 * shiftEdges, this.app.screen.height + 2 * shiftEdges)
@@ -239,8 +290,8 @@ export class GameBase {
     });
 
     const focusDarkLayer = new Sprite(texture);
-    this.app.stage.addChild(focusDarkLayer);
-    darkenLayer.mask = focusDarkLayer;
+    // this.app.stage.addChild(focusDarkLayer);
+    // darkenLayer.mask = focusDarkLayer;
 
     const maskGame = new Graphics()
       .rect(0, 0, this.app.screen.width, this.app.screen.height)
@@ -264,8 +315,8 @@ export class GameBase {
     });
 
     const focusGame = new Sprite(textureGame);
-    this.app.stage.addChild(focusGame);
-    this.camera.filterContainer.mask = focusGame;
+    // this.app.stage.addChild(focusGame);
+    // this.camera.filterContainer.mask = focusGame;
 
     this.app.ticker.add((time) => {
 

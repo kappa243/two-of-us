@@ -17,7 +17,7 @@ class Point {
 
 export class MaskLight {
   private position = [0, 0];
-  private borders: any[] = [];
+  borders: any[] = [];
   private walls_m: Map<number, any> = new Map();
   private points_m: Map<number, any> = new Map();
   private points_begin_m: Map<number, any> = new Map();
