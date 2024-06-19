@@ -1,4 +1,5 @@
 import { MAP_BOTTOM_Y, MAP_TOP_Y, PLAYER_SPEED } from "@/config";
+import { Sound } from "@pixi/sound";
 import { Application, Container, Point, Sprite, Ticker } from "pixi.js";
 import { Camera } from "./Camera";
 import { Key, KeyboardController } from "./controls/KeyboardController";
@@ -53,6 +54,9 @@ export class GameManager {
 
   private nLastTime: number = 0;
 
+  private sLastTime: number = 0;
+  private walkSounds: any;
+
   constructor(app: Application, sessionController: SessionController, controller: KeyboardController, camera: Camera) {
     this.app = app;
     this.sessionController = sessionController;
@@ -65,6 +69,12 @@ export class GameManager {
     this.players = new Map<string, Player>();
 
     this.registerListeners();
+
+    this.walkSounds = [
+      Sound.from("assets/sound/among_walk_1.mp3"),
+      Sound.from("assets/sound/among_walk_2.mp3"),
+      Sound.from("assets/sound/among_walk_3.mp3")
+    ];
   }
 
   private setupContainers() {
@@ -174,8 +184,6 @@ export class GameManager {
     }
 
     this.players.forEach((player) => {
-      if (player.moving)
-        console.log(player.sessionId, player.moving);
 
       if (player.sessionId !== this.local_player?.sessionId) {
         player.interpolate(0.25);
@@ -225,9 +233,21 @@ export class GameManager {
           this.sessionController.sendMoving(true);
         }
       } else {
+        // player sound every second
+        const ss = Math.floor(time.lastTime);
+
+        if (Math.abs(ss - this.sLastTime) > 1200 / 4){
+          this.sLastTime = ss;
+
+          let sound = this.walkSounds[Math.floor(Math.random() * this.walkSounds.length)];
+          sound.play();
+        }
+
         if (length_vector(mov_vec) < 0.01){
           this.local_player.setMoving(false);
           this.sessionController.sendMoving(false);
+
+          this.sLastTime = 0;
         }
       }
 

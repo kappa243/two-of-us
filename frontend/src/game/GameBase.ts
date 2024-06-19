@@ -25,7 +25,7 @@ export class GameBase {
       { alias: "map", src: "assets/map.png"},
       { alias: "map_above", src: "assets/map_above.png"},
       { alias: "walk", src: "assets/walk.png"},
-      { alias: "walk_json", src: "assets/walk.json"}
+      { alias: "walk_json", src: "assets/walk.json"},
     ];
 
     await Assets.load(assets);
