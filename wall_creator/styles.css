@@ -1,0 +1,17 @@
+body {
+    display: flex;
+    height: 100vh;
+    top: 0;
+    margin: 0 !important;
+}
+
+.canvas-container {
+    position: relative;
+}
+
+canvas {
+    border: 0 solid #a50202;
+    margin-top: 20px;
+    background: url('background.png') no-repeat center center;
+    background-size: cover;
+}

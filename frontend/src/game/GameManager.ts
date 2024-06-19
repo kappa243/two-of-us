@@ -5,13 +5,17 @@ import { Camera } from "./Camera";
 import { Key, KeyboardController } from "./controls/KeyboardController";
 import { Player } from "./objects/Player";
 import { SessionController } from "./online/SessionController";
-
+import {Wall} from "@/game/utils/Wall";
+import {WallProvider} from "@/game/utils/WallProvider";
+import { Graphics } from "pixi.js";
 // TODO move to movement class
 
 const UP_VECTOR = new Point(0, -1);
 const DOWN_VECTOR = new Point(0, 1);
 const LEFT_VECTOR = new Point(-1, 0);
 const RIGHT_VECTOR = new Point(1, 0);
+
+const lines = WallProvider.getWalls();
 
 const sum_vectors = (v1: Point, v2: Point) => {
   return new Point(v1.x + v2.x, v1.y + v2.y);
@@ -107,6 +111,17 @@ export class GameManager {
     this.backgroundContentContainer.addChild(mapSprite);
     this.foregroundContentContainer.addChild(mapAboveSprite);
 
+    // drawing lines
+    // for (let line of lines) {
+    //   let obj: Graphics;
+    //   obj = new Graphics()
+    //     .poly([new Point(line.begin.x, line.begin.y), new Point(line.end.x, line.end.y), new Point(line.begin.x + 10, line.begin.y + 10), new Point(line.end.x + 10 , line.end.y + 10)])
+    //     .fill({ color: "white" });
+    //
+    //   // Add it to the stage to render
+    //   this.foregroundContentContainer.addChild(obj);
+    // }
+
     // add to stage
     this.gameContentContainer.addChild(this.backgroundContentContainer);
     this.gameContentContainer.addChild(this.foregroundContentContainer);
@@ -137,8 +152,7 @@ export class GameManager {
     if (newPlayer.sessionId === this.sessionController.getSessionId()) {
       this.local_player = newPlayer;
       this.camera.follow(newPlayer);
-    }
-    else {
+    } else {
       player.listen("position", (value: any, previousValue: number[]) => {
         newPlayer.setCachedPositionX(value.x);
         newPlayer.setCachedPositionY(value.y);
@@ -190,7 +204,7 @@ export class GameManager {
       }
     });
 
-    
+
     // for every Key values change player position
     let mov_vec = new Point(0, 0);
 
@@ -211,6 +225,7 @@ export class GameManager {
               break;
             case Key.RIGHT:
               mov_vec = sum_vectors(mov_vec, RIGHT_VECTOR);
+              break;
             case Key.Q:
               break;
           }
@@ -221,7 +236,7 @@ export class GameManager {
     mov_vec = normalize_vector(mov_vec);
     mov_vec = multiply_vector(mov_vec, PLAYER_SPEED * time.deltaTime);
 
-    if (this.local_player !== null) {
+    if (this.local_player !== null && !this.checkCollision(this.local_player, mov_vec)) {
       this.local_player.x += mov_vec.x;
       this.local_player.y += mov_vec.y;
 
@@ -262,7 +277,47 @@ export class GameManager {
         this.sessionController.sendSide(1);
       }
     }
-
   }
 
+  private isColliding(player: Player, move_vector: Point, wall: Wall) {
+
+    const newPosition = new Point(player.x + move_vector.x, player.y + move_vector.y);
+
+    const leftX = newPosition.x - player.widthLeft / 2;
+    const rightX = newPosition.x + player.widthRight / 2;
+
+    const upperY = newPosition.y - player.heightTop / 2;
+    const lowerY = newPosition.y + player.heightBottom / 2;
+
+    if (upperY > Math.min(wall.begin.y, wall.end.y) && upperY < Math.max(wall.begin.y, wall.end.y)) {
+      if (wall.returnCoordinatXhavingY(upperY) >= leftX && wall.returnCoordinatXhavingY(upperY) <= rightX) {
+        return true;
+      }
+    }
+    if (lowerY > Math.min(wall.begin.y, wall.end.y) && lowerY < Math.max(wall.begin.y, wall.end.y)) {
+      if (wall.returnCoordinatXhavingY(lowerY) >= leftX && wall.returnCoordinatXhavingY(lowerY) <= rightX) {
+        return true;
+      }
+    }
+    if (leftX > Math.min(wall.begin.x, wall.end.x) && leftX < Math.max(wall.begin.x, wall.end.x)) {
+      if (wall.returnCoordinatYhavingX(leftX) >= upperY && wall.returnCoordinatYhavingX(leftX) <= lowerY) {
+        return true;
+      }
+    }
+    if (rightX > Math.min(wall.begin.x, wall.end.x) && rightX < Math.max(wall.begin.x, wall.end.x)) {
+      if (wall.returnCoordinatYhavingX(rightX) >= upperY && wall.returnCoordinatYhavingX(rightX) <= lowerY) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private checkCollision(player: Player, move_vector: Point) {
+    for (let wall of lines) {
+      if (this.isColliding(player, move_vector, wall)) {
+        return true;
+      }
+    }
+    return false;
+  }
 }

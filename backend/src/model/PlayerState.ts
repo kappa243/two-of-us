@@ -21,7 +21,7 @@ export class Pos extends Schema{
 export class PlayerState extends Schema {
     @type("string") connectionId: string;
     // @type([ "number" ]) position: ArraySchema<number> = new ArraySchema<number>(getRandomInt(300), getRandomInt(300));
-    @type(Pos) position: Pos = new Pos(0, 0);
+    @type(Pos) position: Pos = new Pos(400, 0);
     
     @type("number") side: number = -1;
     @type("number") color: number = 0;

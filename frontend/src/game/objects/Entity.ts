@@ -8,6 +8,10 @@ export class Entity implements IFollowable<Point>, Observer<ObservablePoint> {
   protected sprite!: Sprite;
   protected anim!: AnimatedSprite;
   private _position: ObservablePoint;
+  private _widthLeft: number = 60;
+  private _widthRight: number = 60;
+  private _heightTop: number = -40;
+  private _heightBottom: number = 80;
 
   private cont!: Container;
 
@@ -139,4 +143,21 @@ export class Entity implements IFollowable<Point>, Observer<ObservablePoint> {
     container.removeChild(this.anim);
   }
 
+
+  get widthLeft(): number {
+    return this._widthLeft;
+  }
+
+  get widthRight(): number {
+    return this._widthRight;
+  }
+
+
+  get heightTop(): number {
+    return this._heightTop;
+  }
+
+  get heightBottom(): number {
+    return this._heightBottom;
+  }
 }
