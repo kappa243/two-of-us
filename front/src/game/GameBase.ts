@@ -3,6 +3,7 @@ import { Camera } from "./Camera";
 import { Controller, Key } from "./Controller";
 import { FollowableBunny } from "./FollowableBunny";
 import { MaskLight } from "./MaskLight";
+import { map } from "lodash";
 
 enum ObstacleType {
   FULL = 1,
@@ -56,12 +57,15 @@ export class GameBase {
   }
 
   generateMap() {
-    let map_layout = [[this.SCREEN_WIDTH, 0, 0, 0], [this.SCREEN_WIDTH, this.SCREEN_HEIGHT, this.SCREEN_WIDTH, 0], [0, this.SCREEN_HEIGHT, this.SCREEN_WIDTH, this.SCREEN_HEIGHT], [0, 0, 0, this.SCREEN_HEIGHT]]; //[[100, 100, 120, 100], [300, 300, 350, 300], [200, 250, 250, 300]];
-    for (let i = 20; i <= this.SCREEN_WIDTH; i += 300) {
-      for (let j = 20; j <= this.SCREEN_HEIGHT; j += 300) {
+    let map_layout = [[0, 0, this.SCREEN_WIDTH, 0], [this.SCREEN_WIDTH, 0, this.SCREEN_WIDTH, this.SCREEN_HEIGHT], [this.SCREEN_WIDTH, this.SCREEN_HEIGHT, 0, this.SCREEN_HEIGHT], [0, this.SCREEN_HEIGHT, 0, 0]]; //[[100, 100, 120, 100], [300, 300, 350, 300], [200, 250, 250, 300]];
+    for (let i = 20; i <= this.SCREEN_WIDTH-100; i += 300) {
+      for (let j = 20; j <= this.SCREEN_HEIGHT-100; j += 300) {
         map_layout.push([i, j, i + this.getRandomInt(70), j + this.getRandomInt(70)]);
       }
     }
+    // map_layout.push([1040, 820, 1080, 1000]);
+    // map_layout.push([319, 1214, 406, 1285]);
+    // console.log("map_layout first: ", map_layout);
     return map_layout;
   }
 
@@ -84,6 +88,8 @@ export class GameBase {
       const rect = new Graphics().poly(obstacle).fill({ color: "black" });
       hiddenContainer.addChild(rect);
     });
+
+    console.log("obs: ", obs);
 
     let mLight = new MaskLight(obs, this.SCREEN_WIDTH, this.SCREEN_HEIGHT);
     mLight.setPosition(x, y);
@@ -117,7 +123,22 @@ export class GameBase {
 
       this.screenObstacles.forEach((segment) => {
         if (obstacleType === ObstacleType.FULL) {
-          this.all_segments.push([segment[0], segment[1], segment[2], segment[3], segment[2] + offset, segment[3], segment[0] + offset, segment[1]]);
+          let a = Math.abs(segment[1] - segment[3]);
+          let b = Math.abs(segment[0] - segment[2]);
+
+          if (b !== 0){
+            let c = a/b;
+            // a^2 + b^2 = 100;
+            // a^2 + c^2*a^2 = 100;
+            // a^2(1 + c^2) = 100;
+            a = Math.sqrt(100/(1 + Math.pow(c,2)));
+            b = c*a;
+            this.all_segments.push([segment[0], segment[1], segment[2], segment[3], segment[2] + b, segment[3]+a, segment[0] + b, segment[1]+a]);
+          }
+          else{
+            this.all_segments.push([segment[0], segment[1], segment[2], segment[3], segment[2] + offset, segment[3], segment[0] + offset, segment[1]]);
+          }
+
         }
         else {
           this.all_segments.push([segment[0], segment[1], segment[2], segment[3]]);
@@ -138,15 +159,16 @@ export class GameBase {
     this.mLight.setPosition(x, y);
     // const myPosition = new Graphics().rect(140, 140, 10, 10).fill({ color: "green" });
     this.mLight.createRays();
+    console.log("my position: ", x, y)
     
     let endTime = performance.now();
     console.log("Time to render light: ", endTime - startTime, "ms");
 
     let segment2: number[] = [];
-    let hiddenSpaces = new Graphics().rect(-100, -100, this.SCREEN_WIDTH+200, this.SCREEN_HEIGHT+200).fill({ color: 0xff0000, alpha: 0.5 });
-
+    let hiddenSpaces = new Graphics()//.rect(-100, -100, this.SCREEN_WIDTH+200, this.SCREEN_HEIGHT+200).fill({ color: 0xff0000, alpha: 0.5 });
+    
     this.mLight.outputPolygon.forEach((point) => {
-      let toAdd = true;
+      // let toAdd = true;
       // this.mLight.borders.forEach(borderPoint => {
       //   if (point[0] == borderPoint[0] && point[1] == borderPoint[1]) {
       //       toAdd = false;
@@ -176,8 +198,8 @@ export class GameBase {
     });
     console.log(segment2.length);
     console.log(segment2);
-    segment2.push(segment2[0]);
-    segment2.push(segment2[1]);
+    // segment2.push(segment2[0]);
+    // segment2.push(segment2[1]);
     // remove triagle from hiddenSpaces
 
     // let prevx = segment2[segment2.length-2];
@@ -196,7 +218,8 @@ export class GameBase {
     // hiddenSpaces.circle(x, y, 20).cut();
 
     // const lightPolygon2 = new Graphics().poly(segment2).fill({ color: "white", alpha: 0.5 });
-    hiddenSpaces.poly(segment2).cut();
+    // hiddenSpaces.poly(segment2).cut();
+    hiddenSpaces.poly(segment2).fill({ color: 0xff0000, alpha: 0.5 });
     if (visionContainer.children.length > 0) {
       console.log("visionContainer size: ", visionContainer.children.length)
       visionContainer.removeChildAt(visionContainer.children.length - 1);

@@ -17,7 +17,7 @@ class Point {
 
 export class MaskLight {
   private position = [0, 0];
-  borders: any[] = [];
+  private borders: any[] = [];
   private walls_m: Map<number, any> = new Map();
   private points_m: Map<number, any> = new Map();
   private points_begin_m: Map<number, any> = new Map();
@@ -61,7 +61,8 @@ export class MaskLight {
   constructor(obstacles: any[], width: number, height: number) {
     this.SCREEN_WIDTH = width;
     this.SCREEN_HEIGHT = height;
-    this.borders = [[[this.SCREEN_WIDTH, 0], [0, 0]], [[this.SCREEN_WIDTH, this.SCREEN_HEIGHT], [this.SCREEN_WIDTH, 0]], [[0, this.SCREEN_HEIGHT], [this.SCREEN_WIDTH, this.SCREEN_HEIGHT]], [[0, 0], [0, this.SCREEN_HEIGHT]]];
+    // this.borders = [[[this.SCREEN_WIDTH, 0], [0, 0]], [[this.SCREEN_WIDTH, this.SCREEN_HEIGHT], [this.SCREEN_WIDTH, 0]], [[0, this.SCREEN_HEIGHT], [this.SCREEN_WIDTH, this.SCREEN_HEIGHT]], [[0, 0], [0, this.SCREEN_HEIGHT]]];
+    this.borders =[]// [[[this.SCREEN_WIDTH+10, -10], [-10, -10]], [[this.SCREEN_WIDTH+10, this.SCREEN_HEIGHT+10], [this.SCREEN_WIDTH+10, -10]], [[-10, this.SCREEN_HEIGHT+10], [this.SCREEN_WIDTH+10, this.SCREEN_HEIGHT+10]], [[-10, -10], [-10, this.SCREEN_HEIGHT+10]]];
     this.initialize(obstacles);
   }
 
@@ -100,6 +101,7 @@ export class MaskLight {
 
   angleBetweenVectors(startPoint: any, endPoint: any) {
     return -Math.atan2(endPoint[0] - startPoint[0], endPoint[1] - startPoint[1]);
+    // return -Math.atan2(endPoint[1] - startPoint[1], endPoint[0] - startPoint[0]);
   }
 
   calculate_vector_2d(angle: number, scalar: number) {
@@ -164,18 +166,24 @@ export class MaskLight {
     let x4 = wall2[1][0];
     let y4 = wall2[1][1];
 
-    let a1 = y2 - y1;
-    let b1 = x1 - x2;
-    let c1 = a1 * x1 + b1 * y1;
-    let a2 = y4 - y3;
-    let b2 = x3 - x4;
-    let c2 = a2 * x3 + b2 * y3;
+    let alpha = ((x4 - x3) * (y3 - y1) - (y4 - y3) * (x3 - x1))/((x4 - x3) * (y2 - y1) - (y4 - y3) * (x2 - x1));
+    // let beta = ((x2-x1)*(y3-y1) - (y2-y1)*(x3-x1))/((x4-x3)*(y2-y1) - (y4-y3)*(x2-x1));
+    let x0 = x1 + alpha * (x2 - x1);
+    let y0 = y1 + alpha * (y2 - y1);
 
-    let det = a1 * b2 - a2 * b1;
-    let x = (b2 * c1 - b1 * c2) / det;
-    let y = (a1 * c2 - a2 * c1) / det;
+    // let a1 = y2 - y1;
+    // let b1 = x1 - x2;
+    // let c1 = a1 * x1 + b1 * y1;
+    // let a2 = y4 - y3;
+    // let b2 = x3 - x4;
+    // let c2 = a2 * x3 + b2 * y3;
 
-    return [x, y];
+    // let det = a1 * b2 - a2 * b1;
+    // let x = (b2 * c1 - b1 * c2) / det;
+    // let y = (a1 * c2 - a2 * c1) / det;
+
+    // return [x, y];
+    return [x0, y0];
   }
 
   degrees(rad: number) {
@@ -288,50 +296,111 @@ export class MaskLight {
       }
     });
 
+    console.log("walls: ", walls)
+
     let rays = this.prepareRays();
 
-    let otherRays: number[][][] = [];
-    let collision: Set<number[][]> = new Set();
-
-    walls.forEach((wall) => {
-      let filteredRays = rays.filter((ray) => {
-        return this.checkOrientation(this.position, wall[1], ray[1]) &&
-          !this.checkOrientation(this.position, wall[0], ray[1]);
-      });
-
-      for (let idx = 0; idx < filteredRays.length; idx++) {
-        let ray = filteredRays[idx];
-        if (collision.has(ray)) {
-          continue;
-        }
-
-        if (this.intersection(wall, ray)) {
-          let endRay = ray[1];
-          if (this.points_m.has(this.hashFunction(endRay))) {
-            let wall1 = this.points_begin_m.get(this.hashFunction(endRay));
-            let wall2 = this.points_end_m.get(this.hashFunction(endRay));
-            if (wall !== wall1 && wall !== wall2) {
-              collision.add(ray);
-            }
-          }
-          else {
-            collision.add(ray);
-            endRay = this.pointOfIntersection(ray, wall);
-            otherRays.push([this.position, endRay]);
-          }
-        }
-
+    rays.forEach((ray) => {
+      let pt = ray[1];
+      if(pt[0] < 410 && pt[0] > 310 && pt[1] < 1290 && pt[1] > 1210){
+        console.log("edge ray: ", ray)
       }
-
     });
 
+    rays.forEach((ray) => {
+      let pt = ray[1];
+      if(pt[0] < 100 && pt[0] >=0 && pt[1] < 1400 && pt[1] > 1350){
+        console.log("corner ray: ", ray)
+      }
+    });
+
+    let otherRays: number[][][] = [];
+    let newRays: number[][][] = [];
+    let collision: Set<number[][]> = new Set();
+    let collision_m: Map<number, number[][]> = new Map();
+
+      walls.forEach((wall) => {
+        let filteredRays = rays.filter((ray) => {
+          return this.checkOrientation(this.position, wall[1], ray[1]) &&
+            !this.checkOrientation(this.position, wall[0], ray[1]);
+        });
+
+        for (let idx = 0; idx < filteredRays.length; idx++) {
+          let ray = filteredRays[idx];
+          if (collision_m.has(this.hashFunction(ray[1]))) {
+            continue;
+          }
+          if (collision.has(ray)) {
+            continue;
+          }
+
+          if (this.intersection(wall, ray)) {
+            let endRay = ray[1];
+            if (this.points_m.has(this.hashFunction(endRay))) {
+              let wall1 = this.points_begin_m.get(this.hashFunction(endRay));
+              let wall2 = this.points_end_m.get(this.hashFunction(endRay));
+              if (wall !== wall1 && wall !== wall2) {
+                collision.add(ray);
+                collision_m.set(this.hashFunction(ray[1]), ray);
+                endRay = this.pointOfIntersection(ray, wall);
+                if( endRay !== ray[1]) rays.push([this.position, endRay]);
+                // if(endRay[0] < 100 && endRay[0] >=0 && endRay[1] < 1400 && endRay[1] > 1350){
+                //   console.log("1: corner endRay: ", endRay, " wall: ", wall, " ray: ", ray)
+                // }
+                // if(endRay[0] < 410 && endRay[0] > 310 && endRay[1] < 1290 && endRay[1] > 1210){
+                //   console.log("1: edge endRay: ", endRay, " wall: ", wall, " ray: ", ray)
+                // }
+                otherRays.push([this.position, endRay]);
+              }
+            }
+            else {
+              collision.add(ray);
+              collision_m.set(this.hashFunction(ray[1]), ray);
+              endRay = this.pointOfIntersection(ray, wall);
+              if( endRay !== ray[1] )
+                rays.push([this.position, endRay]);
+              if(endRay[0] < 100 && endRay[0] >=0 && endRay[1] < 1400 && endRay[1] > 1350){
+                console.log("2: corner endRay: ", endRay, " wall: ", wall, " ray: ", ray)
+              }
+              if(endRay[0] < 410 && endRay[0] > 310 && endRay[1] < 1290 && endRay[1] > 1210){
+                console.log("2: edge endRay: ", endRay, " wall: ", wall, " ray: ", ray)
+              }
+              otherRays.push([this.position, endRay]);
+            }
+          }
+
+        }
+
+      });
+
+    console.log("collision: ", collision)
+    let i = 0;
     let filteredRays: number[][][] = [];
     rays.forEach((ray) => {
-      if (!collision.has(ray)) {
+      // if (!collision.has(ray)) {
+      if(!collision_m.has(this.hashFunction(ray[1]))){
+        let endRay = ray[1];
+        if(endRay[0] < 100 && endRay[0] >=0 && endRay[1] < 1400 && endRay[1] > 1350){
+          console.log("3: corner ray: ", endRay, " ray: ", ray)
+        }
+        filteredRays.push(ray);
+      }
+      // else{
+        // console.log("removed ray: ", ray)
+      // }
+    });
+    otherRays.forEach((ray) => {
+      // if (!collision.has(ray)) {
+      if(!collision_m.has(this.hashFunction(ray[1]))){
+        let endRay = ray[1];
+        if(endRay[0] < 100 && endRay[0] >=0 && endRay[1] < 1400 && endRay[1] > 1350){
+          console.log("4: corner ray: ", endRay, " ray: ", ray)
+        }
         filteredRays.push(ray);
       }
     });
-    filteredRays = filteredRays.concat(otherRays);
+    // console.log("removed rays: ", i)
+    // filteredRays = filteredRays.concat(otherRays);
 
     filteredRays.sort((a, b) => {
       if (this.angleBetweenVectors(this.position, a[1]) < this.angleBetweenVectors(this.position, b[1])) {
@@ -370,7 +439,7 @@ export class MaskLight {
       if(wall !== undefined){
       if (this.checkOrientation(this.position, point, wall[1])) {
         let passAngle = -this.toRadians(this.degrees(angle) + 0.01);
-        let end = this.moveUsingAngle(this.position, passAngle, 1500);
+        let end = this.moveUsingAngle(this.position, passAngle, 2500);
         rays.push([this.position, end]);
         rightmost_angle = angle;
       }
@@ -385,7 +454,7 @@ export class MaskLight {
       if(wall !== undefined){
       if (!this.checkOrientation(this.position, point, wall[0])) {
         let passAngle = -this.toRadians(this.degrees(angle) - 0.01);
-        let end = this.moveUsingAngle(this.position, passAngle, 1500);
+        let end = this.moveUsingAngle(this.position, passAngle, 2500);
         rays.push([this.position, end]);
         leftmost_angle = angle;
       }
