@@ -3,3 +3,4 @@
 node_modules
 assets/test
 wall_creator/.idea
+frontend/package-lock.json

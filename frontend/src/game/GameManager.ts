@@ -117,7 +117,7 @@ export class GameManager {
     //   obj = new Graphics()
     //     .poly([new Point(line.begin.x, line.begin.y), new Point(line.end.x, line.end.y), new Point(line.begin.x + 10, line.begin.y + 10), new Point(line.end.x + 10 , line.end.y + 10)])
     //     .fill({ color: "white" });
-    //
+    
     //   // Add it to the stage to render
     //   this.foregroundContentContainer.addChild(obj);
     // }
@@ -234,11 +234,49 @@ export class GameManager {
     });
 
     mov_vec = normalize_vector(mov_vec);
-    mov_vec = multiply_vector(mov_vec, PLAYER_SPEED * time.deltaTime);
+    mov_vec = multiply_vector(mov_vec, PLAYER_SPEED* time.deltaTime);
 
-    if (this.local_player !== null && !this.checkCollision(this.local_player, mov_vec)) {
-      this.local_player.x += mov_vec.x;
-      this.local_player.y += mov_vec.y;
+    if (this.local_player !== null) {
+      let colliding_wall: Wall | null = this.checkCollision(this.local_player, mov_vec);
+      if(colliding_wall  === null) {
+        
+        this.local_player.x += mov_vec.x;
+        this.local_player.y += mov_vec.y;
+      }
+      else {
+        let wall: Wall = colliding_wall;
+        let wall_vector = new Point(wall.end.x - wall.begin.x, wall.end.y - wall.begin.y);
+        let wall_normal = normalize_vector(wall_vector);
+        let reflected_vector = multiply_vector(wall_normal, PLAYER_SPEED * time.deltaTime);
+        let offset = 10;
+        if((wall_vector.x > offset || wall_vector.x < -offset) && (wall_vector.y > offset || wall_vector.y < -offset)){
+          // let wall_normal = new Point(-wall_vector.y, wall_vector.x);
+          if(mov_vec.x * wall_vector.x < 0 || mov_vec.y * wall_vector.y < 0){
+            reflected_vector.x = -reflected_vector.x;
+            reflected_vector.y = -reflected_vector.y;
+          }
+          else if(mov_vec.y * wall_vector.y * mov_vec.x * wall_vector.x< 0){
+            reflected_vector.x = 0;
+            reflected_vector.y = 0;
+          }
+
+        }
+        else{
+          if(wall_vector.x > offset || wall_vector.x < -offset){
+            reflected_vector.x = mov_vec.x;
+          }
+          if(wall_vector.y > offset || wall_vector.y < -offset){
+            reflected_vector.y = mov_vec.y;
+          }
+        }
+
+        let wall2 = this.checkCollision(this.local_player, reflected_vector);
+        if(wall2 == null){
+          this.local_player.x += reflected_vector.x;
+          this.local_player.y += reflected_vector.y;
+        }
+
+      }
 
       this.sessionController.sendPosition(this.local_player.position);
 
@@ -312,12 +350,12 @@ export class GameManager {
     return false;
   }
 
-  private checkCollision(player: Player, move_vector: Point) {
+  private checkCollision(player: Player, move_vector: Point): Wall | null{
     for (let wall of lines) {
       if (this.isColliding(player, move_vector, wall)) {
-        return true;
+        return wall;
       }
     }
-    return false;
+    return null;
   }
 }
