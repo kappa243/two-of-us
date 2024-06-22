@@ -194,7 +194,10 @@ export class MaskLight {
     return result;
   }
 
-  getCenterOfWall(wall: any){
+  getCenterOfWall(wall: any, second: boolean){
+    if(second){
+      return [(wall[0][0] + wall[1][0]) / 2 + 1, (wall[0][1] + wall[1][1]) / 2 - 1];
+    }
     return [(wall[0][0] + wall[1][0]) / 2, (wall[0][1] + wall[1][1]) / 2];
   }
 
@@ -209,8 +212,9 @@ export class MaskLight {
     }
 
     if (obstacle.length === 4) {
+      console.log("double edge obstacle: ", obstacle)
       // for double edge obstacle
-      this.setWall(obstacle, 2, 3, 0, 1);
+      this.setWall(obstacle, 2, 3, 0, 1, true);
     }
 
   }
@@ -227,7 +231,7 @@ export class MaskLight {
 
     if (obstacle.length === 4) {
       // for double edge obstacle
-      this.removeWall(obstacle, 2, 3, 0, 1);
+      this.removeWall(obstacle, 2, 3, 0, 1, true);
     }
 
   }
@@ -240,15 +244,15 @@ export class MaskLight {
     return degrees * Math.PI / 180;
   }
 
-  setWall(obstacle: any, x1: number, y1: number, x2: number, y2: number) {
+  setWall(obstacle: any, x1: number, y1: number, x2: number, y2: number, second: boolean=false) {
     let wall = [[obstacle[x1], obstacle[y1]], [obstacle[x2], obstacle[y2]]];
-    this.setCenterAndAddWall(wall);
+    this.setCenterAndAddWall(wall, second);
     this.setPointFromWall(wall);
   }
 
-  removeWall(obstacle: any, x1: number, y1: number, x2: number, y2: number){
+  removeWall(obstacle: any, x1: number, y1: number, x2: number, y2: number, second: boolean=false){
     let wall = [[obstacle[x1], obstacle[y1]], [obstacle[x2], obstacle[y2]]];
-    let centerOfWall = this.getCenterOfWall(wall);
+    let centerOfWall = this.getCenterOfWall(wall, second);
     this.walls_m.delete(this.hashFunction(centerOfWall));
 
     if(this.points_m.has(this.hashFunction(wall[0]))){
@@ -263,8 +267,8 @@ export class MaskLight {
     this.points_end_m.delete(this.hashFunction(wall[1]));
   }
 
-  setCenterAndAddWall(wall: any) {
-    let centerOfWall = this.getCenterOfWall(wall);
+  setCenterAndAddWall(wall: any, second: boolean) {
+    let centerOfWall = this.getCenterOfWall(wall, second);
     wall.push(centerOfWall);
     this.walls_m.set(this.hashFunction(centerOfWall), wall);
   }

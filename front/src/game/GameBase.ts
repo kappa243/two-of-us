@@ -32,7 +32,7 @@ export class GameBase {
 
   // You can change this to test different scenarios
   private render_parameters = {
-    obstacleType: ObstacleType.FULL,
+    obstacleType: ObstacleType.DOUBLE_EDGE,
     layerType: LayerType.GeneratedLayer
   };
 
@@ -58,13 +58,13 @@ export class GameBase {
 
   generateMap() {
     let map_layout = [[0, 0, this.SCREEN_WIDTH, 0], [this.SCREEN_WIDTH, 0, this.SCREEN_WIDTH, this.SCREEN_HEIGHT], [this.SCREEN_WIDTH, this.SCREEN_HEIGHT, 0, this.SCREEN_HEIGHT], [0, this.SCREEN_HEIGHT, 0, 0]]; //[[100, 100, 120, 100], [300, 300, 350, 300], [200, 250, 250, 300]];
-    for (let i = 20; i <= this.SCREEN_WIDTH-100; i += 300) {
-      for (let j = 20; j <= this.SCREEN_HEIGHT-100; j += 300) {
-        map_layout.push([i, j, i + this.getRandomInt(70), j + this.getRandomInt(70)]);
-      }
-    }
-    // map_layout.push([1040, 820, 1080, 1000]);
-    // map_layout.push([319, 1214, 406, 1285]);
+    // for (let i = 20; i <= this.SCREEN_WIDTH-100; i += 300) {
+      // for (let j = 20; j <= this.SCREEN_HEIGHT-100; j += 300) {
+        // map_layout.push([i, j, i + this.getRandomInt(70), j + this.getRandomInt(70)]);
+      // }
+    // }
+    map_layout.push([1040, 820, 1080, 1000]);
+    map_layout.push([319, 1214, 406, 1285]);
     // console.log("map_layout first: ", map_layout);
     return map_layout;
   }
@@ -165,7 +165,7 @@ export class GameBase {
     console.log("Time to render light: ", endTime - startTime, "ms");
 
     let segment2: number[] = [];
-    let hiddenSpaces = new Graphics()//.rect(-100, -100, this.SCREEN_WIDTH+200, this.SCREEN_HEIGHT+200).fill({ color: 0xff0000, alpha: 0.5 });
+    let hiddenSpaces = new Graphics().rect(-100, -100, this.SCREEN_WIDTH+200, this.SCREEN_HEIGHT+200).fill({ color: 0xff0000, alpha: 0.5 });
     
     this.mLight.outputPolygon.forEach((point) => {
       // let toAdd = true;
@@ -218,8 +218,8 @@ export class GameBase {
     // hiddenSpaces.circle(x, y, 20).cut();
 
     // const lightPolygon2 = new Graphics().poly(segment2).fill({ color: "white", alpha: 0.5 });
-    // hiddenSpaces.poly(segment2).cut();
-    hiddenSpaces.poly(segment2).fill({ color: 0xff0000, alpha: 0.5 });
+    hiddenSpaces.poly(segment2).cut();
+    // hiddenSpaces.poly(segment2).fill({ color: 0xff0000, alpha: 0.5 });
     if (visionContainer.children.length > 0) {
       console.log("visionContainer size: ", visionContainer.children.length)
       visionContainer.removeChildAt(visionContainer.children.length - 1);
