@@ -6,8 +6,10 @@ import { Player } from "./objects/Player";
 import { SessionController } from "./online/SessionController";
 import { Wall } from "@/game/utils/Wall";
 import { WallProvider } from "@/game/utils/WallProvider";
+import { WallHelpers } from "@/game/utils/WallHelpers";
 import { MaskLight } from "./vision/MaskLight";
 import { Application, Assets, BlurFilter, Container, Graphics, Rectangle, Sprite, Point, Text, closePointEps, Ticker} from "pixi.js";
+import { off } from "process";
 // TODO move to movement class
 
 const UP_VECTOR = new Point(0, -1);
@@ -58,6 +60,9 @@ export class GameManager {
   private mLight!: MaskLight;
   private SCREEN_WIDTH = 0;
   private SCREEN_HEIGHT = 0;
+  private radius = 350;
+  private actual_borders: number[] = [];
+  private map_walls = WallProvider.getVisionWalls();
 
   private uiContainer!: Container;
   private overlayContainer!: Container;
@@ -96,14 +101,81 @@ export class GameManager {
   }
 
   private onMapEdgeVision(hiddenContainer: Container, visionContainer: Container, x: number, y: number) {
-    if (this.screenObstacles.length === 0) {
-      this.screenObstacles = WallProvider.getVisionWalls();
+
+    let leftx_mini = x - this.radius - 100;
+    let rightx_mini = x + this.radius + 100;
+    let topy_mini = y - this.radius - 100;
+    let bottomy_mini = y + this.radius + 100;
+    let collision = false;
+
+    if (WallHelpers.detectMovingBoxCollision([leftx_mini, topy_mini, rightx_mini, bottomy_mini], this.actual_borders)) {
+      this.screenObstacles = []
+      let leftx = x - this.SCREEN_WIDTH/2 - 100;
+      let rightx = x + this.SCREEN_WIDTH/2 + 100;
+      let topy = y - this.SCREEN_HEIGHT/2 - 100;
+      let bottomy = y + this.SCREEN_HEIGHT/2 + 100;
+      this.actual_borders = [leftx, topy, rightx, bottomy];
+
+      this.map_walls.forEach((wall) => {
+
+        if ((wall[0] >= leftx && wall[0] <= rightx && wall[1] >= topy && wall[1] <= bottomy) || (wall[2] >= leftx && wall[2] <= rightx && wall[3] >= topy && wall[3] <= bottomy)) {
+          this.screenObstacles!.push(wall);
+        }
+        else{
+          if (WallHelpers.intersection([leftx, topy, rightx, topy], wall)){
+            this.screenObstacles!.push(wall);
+          }
+          else if (WallHelpers.intersection([rightx, topy, rightx, bottomy], wall)){
+            this.screenObstacles!.push(wall);
+          }
+          else if (WallHelpers.intersection([rightx, bottomy, leftx, bottomy], wall)){
+            this.screenObstacles!.push(wall);
+          }
+          else if (WallHelpers.intersection([leftx, bottomy, leftx, topy], wall)){
+            this.screenObstacles!.push(wall);
+          }
+        }
+      });
+      this.screenObstacles.push([leftx, topy, rightx, topy]);
+      this.screenObstacles.push([rightx, topy, rightx, bottomy]);
+      this.screenObstacles.push([rightx, bottomy, leftx, bottomy]);
+      this.screenObstacles.push([leftx, bottomy, leftx, topy]);
       // console.log("Obstacle size: ", this.screenObstacles.length, " points amount: ", this.screenObstacles.length * this.screenObstacles[0].length);
+      collision = true;
     }
 
-    if (hiddenContainer.children.length <= 0) {
-      this.screenObstacles.forEach((segment) => {
-        this.all_segments.push([segment[0], segment[1], segment[2], segment[3]]);
+    if (collision) {
+      collision = false;
+      let offset = 10;
+
+      this.all_segments = [];
+      this.screenObstacles!.forEach((segment) => {
+        if (true) {
+          let a = Math.abs(segment[1] - segment[3]);
+          let b = Math.abs(segment[0] - segment[2]);
+
+          if (b !== 0){
+            let c = a/b;
+            // a^2 + b^2 = 100;
+            // a^2 + c^2*a^2 = 100;
+            // a^2(1 + c^2) = 100;
+            a = Math.sqrt(100/(1 + Math.pow(c,2)));
+            b = c*a;
+            if( a >= b-3 && a <= b+3){
+              a = offset;
+              b = offset;
+            }
+            this.all_segments!.push([segment[0], segment[1], segment[2], segment[3], segment[2] + b, segment[3]+a, segment[0] + b, segment[1]+a]);
+          }
+          else{
+            this.all_segments!.push([segment[0], segment[1], segment[2], segment[3], segment[2] + offset, segment[3], segment[0] + offset, segment[1]]);
+          }
+
+        }
+        else {
+          this.all_segments!.push([segment[0], segment[1], segment[2], segment[3]]);
+        }
+
       });
 
       this.mLight = new MaskLight(this.all_segments);
@@ -113,25 +185,16 @@ export class GameManager {
     this.mLight.createRays();
 
     let segment2: number[] = [];
-    let hiddenSpaces = new Graphics().rect(-3000, -3000, this.SCREEN_WIDTH+6000, this.SCREEN_HEIGHT+6000).fill({ color: 0xff0000, alpha: 0.8});
+    let hiddenSpaces = new Graphics().rect(-3000, -3000, this.SCREEN_WIDTH+6000, this.SCREEN_HEIGHT+6000).fill({ color: 0xff0000, alpha: 0.5});
     
-    this.mLight.outputPolygon.forEach((point) => {
-      segment2.push(point[0] - (x-this.SCREEN_WIDTH/2) - 100);
-      segment2.push(point[1] - (y-this.SCREEN_HEIGHT/2) - 100);
-    });
+    for(const point of this.mLight!.outputPolygon){
+      segment2.push(point[0] - (x-this.SCREEN_WIDTH/2));
+      segment2.push(point[1] - (y-this.SCREEN_HEIGHT/2));
+    }
     
     hiddenSpaces.poly(segment2).cut();
-    const darkenLayer2 = new Graphics().rect(-3000, -3000, this.SCREEN_WIDTH+6000, this.SCREEN_HEIGHT+6000).fill({ color: 0x000000});
-    const bounds = new Rectangle(-100, -100, this.SCREEN_WIDTH+200, this.SCREEN_HEIGHT+200);
-    const texture2 = this.app.renderer.generateTexture({
-      target: hiddenSpaces,
-      resolution: 1,
-      frame: bounds,
-    });
-    const focusDarkLayer2 = new Sprite(texture2);
-    
-    darkenLayer2.mask = focusDarkLayer2;
-    // hiddenSpaces.poly(segment2).fill({ color: 0xff0000, alpha: 0.5 });
+    const darkenLayer2 = new Graphics().rect(-3000, -3000, this.SCREEN_WIDTH+6000, this.SCREEN_HEIGHT+6000).fill({ color: 0x000000, alpha: 0.5});
+    darkenLayer2.mask = hiddenSpaces;
 
     if (visionContainer.children.length > 0) {
       visionContainer.removeChildAt(visionContainer.children.length - 1);
@@ -147,16 +210,15 @@ export class GameManager {
     const radius = 250;
     const shiftEdges = 100;
 
-    this.hiddenContainer.zIndex = 100;
+    this.hiddenContainer.zIndex = MAP_BOTTOM_Y + 10;
     this.app.stage.addChild(this.hiddenContainer);
 
-    let visionMask = new Graphics().circle(this.app.screen.width / 2 + 0, this.app.screen.height / 2 + 0, radius+128).fill({ color: 0xff0000, alpha: 0.5 });
+    let visionMask = new Graphics().circle(this.app.screen.width / 2 + 0, this.app.screen.height / 2 + 0, radius+100).fill({ color: 0xff0000, alpha: 0.5 });
     this.visionContainer.mask = visionMask;
-    this.visionContainer.zIndex = 90;
+    this.visionContainer.zIndex = MAP_BOTTOM_Y + 10;
 
     this.camera.container.addChild(this.obstacleContainer);
     this.camera.container.addChild(this.visionContainer);
-
 
     const darkenLayer = new Graphics().rect(0, 0, this.app.screen.width + 0, this.app.screen.height + 0).fill({ color: 0x000000, alpha: 0.5 });
 
@@ -175,7 +237,7 @@ export class GameManager {
     });
     blurDarkLayer.repeatEdgePixels = false;
 
-    maskDarkLayer.filters = [blurDarkLayer];
+    // maskDarkLayer.filters = [blurDarkLayer];
 
     const bounds = new Rectangle(0, 0, this.app.screen.width, this.app.screen.height);
     const texture = this.app.renderer.generateTexture({
@@ -185,33 +247,7 @@ export class GameManager {
     });
 
     const focusDarkLayer = new Sprite(texture);
-    // this.app.stage.addChild(focusDarkLayer);
     darkenLayer.mask = focusDarkLayer;
-
-    const maskGame = new Graphics()
-      .rect(0, 0, this.app.screen.width, this.app.screen.height)
-      .fill({ color: 0x500000 })
-      .circle(this.app.screen.width / 2, this.app.screen.height / 2, radius+100)
-      .fill({ color: 0xff0000 });
-
-    const blurGame = new BlurFilter({
-      kernelSize: 9,
-      quality: 64,
-      strength: 64,
-    });
-
-    maskGame.filters = [blurGame];
-
-    const boundsGame = new Rectangle(0, 0, this.app.screen.width, this.app.screen.height);
-    const textureGame = this.app.renderer.generateTexture({
-      target: maskGame,
-      resolution: 1,
-      frame: boundsGame,
-    });
-
-    const focusGame = new Sprite(textureGame);
-    // this.app.stage.addChild(focusGame);
-    this.camera.container.mask = focusGame;
 
   }
 
