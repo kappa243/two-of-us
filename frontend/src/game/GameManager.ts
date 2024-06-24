@@ -63,6 +63,7 @@ export class GameManager {
   private radius = 350;
   private actual_borders: number[] = [];
   private map_walls = WallProvider.getVisionWalls();
+  private shiftEdges = 3000;
 
   private uiContainer!: Container;
   private overlayContainer!: Container;
@@ -83,7 +84,7 @@ export class GameManager {
     this.camera = camera;
 
     this.setupContainers();
-    this.setupLayers();
+    this.setupVisionLayers();
     this.SCREEN_WIDTH = this.app.screen.width;
     this.SCREEN_HEIGHT = this.app.screen.height;
 
@@ -107,8 +108,9 @@ export class GameManager {
     let topy_mini = y - this.radius - 100;
     let bottomy_mini = y + this.radius + 100;
     let collision = false;
+    let mini_box = [leftx_mini, topy_mini, rightx_mini, bottomy_mini];
 
-    if (WallHelpers.detectMovingBoxCollision([leftx_mini, topy_mini, rightx_mini, bottomy_mini], this.actual_borders)) {
+    if (WallHelpers.detectMovingBoxCollision(mini_box, this.actual_borders)) {
       this.screenObstacles = []
       let leftx = x - this.SCREEN_WIDTH/2 - 100;
       let rightx = x + this.SCREEN_WIDTH/2 + 100;
@@ -185,7 +187,7 @@ export class GameManager {
     this.mLight.createRays();
 
     let segment2: number[] = [];
-    let hiddenSpaces = new Graphics().rect(-3000, -3000, this.SCREEN_WIDTH+6000, this.SCREEN_HEIGHT+6000).fill({ color: 0xff0000, alpha: 0.5});
+    let hiddenSpaces = new Graphics().rect(-this.shiftEdges, -this.shiftEdges, this.SCREEN_WIDTH+2*this.shiftEdges, this.SCREEN_HEIGHT+2*this.shiftEdges).fill({ color: 0xff0000, alpha: 0.5});
     
     for(const point of this.mLight!.outputPolygon){
       segment2.push(point[0] - (x-this.SCREEN_WIDTH/2));
@@ -193,7 +195,7 @@ export class GameManager {
     }
     
     hiddenSpaces.poly(segment2).cut();
-    const darkenLayer2 = new Graphics().rect(-3000, -3000, this.SCREEN_WIDTH+6000, this.SCREEN_HEIGHT+6000).fill({ color: 0x000000, alpha: 0.5});
+    const darkenLayer2 = new Graphics().rect(-this.shiftEdges, -this.shiftEdges, this.SCREEN_WIDTH + 2* this.shiftEdges, this.SCREEN_HEIGHT+ 2*this.shiftEdges).fill({ color: 0x000000, alpha: 0.5});
     darkenLayer2.mask = hiddenSpaces;
 
     if (visionContainer.children.length > 0) {
@@ -206,14 +208,12 @@ export class GameManager {
     this.onMapEdgeVision(hiddenContainer, visionContainer, posX, posY);
   }
 
-  private setupLayers(){
-    const radius = 250;
-    const shiftEdges = 100;
+  private setupVisionLayers(){
 
     this.hiddenContainer.zIndex = MAP_BOTTOM_Y + 10;
     this.app.stage.addChild(this.hiddenContainer);
 
-    let visionMask = new Graphics().circle(this.app.screen.width / 2 + 0, this.app.screen.height / 2 + 0, radius+100).fill({ color: 0xff0000, alpha: 0.5 });
+    let visionMask = new Graphics().circle(this.app.screen.width / 2, this.app.screen.height / 2, this.radius).fill({ color: 0xff0000, alpha: 0.5 });
     this.visionContainer.mask = visionMask;
     this.visionContainer.zIndex = MAP_BOTTOM_Y + 10;
 
@@ -225,9 +225,9 @@ export class GameManager {
     this.hiddenContainer.addChild(darkenLayer);
 
     const maskDarkLayer = new Graphics()
-      .rect(-shiftEdges, -shiftEdges, this.app.screen.width + 2 * shiftEdges, this.app.screen.height + 2 * shiftEdges)
+      .rect(-this.shiftEdges, -this.shiftEdges, this.app.screen.width + 2 * this.shiftEdges, this.app.screen.height + 2 * this.shiftEdges)
       .fill({ color: 0xff0000 })
-      .circle(this.app.screen.width / 2 + 0, this.app.screen.height / 2 + 0, radius+100)
+      .circle(this.app.screen.width / 2 + 0, this.app.screen.height / 2 + 0, this.radius)
       .cut();
 
     const blurDarkLayer = new BlurFilter({
