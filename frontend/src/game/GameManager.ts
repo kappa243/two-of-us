@@ -51,9 +51,12 @@ export class GameManager {
   private backgroundContentContainer!: Container;
   private gameContentContainer!: Container;
   private foregroundContentContainer!: Container;
+  private darklayerContainer: Container = new Container();
   private hiddenContainer = new Container();
+  private visionLayerContainer: Container = new Container();
   private visionContainer = new Container();
   private obstacleContainer = new Container();
+
 
   private screenObstacles: any[] = [];
   private all_segments: number[][] = [];
@@ -64,6 +67,7 @@ export class GameManager {
   private actual_borders: number[] = [];
   private map_walls = WallProvider.getVisionWalls();
   private shiftEdges = 3000;
+  private shadowLayer: Graphics = new Graphics();//.rect(-this.shiftEdges, -this.shiftEdges, this.SCREEN_WIDTH + 2* this.shiftEdges, this.SCREEN_HEIGHT+ 2*this.shiftEdges).fill({ color: 0x000000, alpha: 0.5});
 
   private uiContainer!: Container;
   private overlayContainer!: Container;
@@ -187,21 +191,41 @@ export class GameManager {
     this.mLight.createRays();
 
     let segment2: number[] = [];
-    let hiddenSpaces = new Graphics().rect(-this.shiftEdges, -this.shiftEdges, this.SCREEN_WIDTH+2*this.shiftEdges, this.SCREEN_HEIGHT+2*this.shiftEdges).fill({ color: 0xff0000, alpha: 0.5});
-    
+    let shiftedSegment: number[] = [];
+    let playerX = (x-this.SCREEN_WIDTH/2);
+    let playerY = (y-this.SCREEN_HEIGHT/2);
+    console.log("x: ", x, " y: ", y)
+    console.log("playerX: ", playerX, " playerY: ", playerY)
+    console.log("Screen width: ", this.SCREEN_WIDTH, " Screen height: ", this.SCREEN_HEIGHT)
+    let vision = new Graphics().rect(-this.shiftEdges, -this.shiftEdges, this.SCREEN_WIDTH+2*this.shiftEdges, this.SCREEN_HEIGHT+2*this.shiftEdges).fill({ color: 0x000000, alpha: 0.5});
+    let shiftedVision = new Graphics()//.rect(-this.shiftEdges, -this.shiftEdges, this.SCREEN_WIDTH+2*this.shiftEdges, this.SCREEN_HEIGHT+2*this.shiftEdges).fill({ color: 0x000000, alpha: 0.5});
+    // const maskOfAMask = new Graphics().circle(x - playerX, y - playerY, this.radius).fill({ color: 0x000000, alpha: 0.5 });
+    // shiftedVision.mask = maskOfAMask;
     for(const point of this.mLight!.outputPolygon){
-      segment2.push(point[0] - (x-this.SCREEN_WIDTH/2));
-      segment2.push(point[1] - (y-this.SCREEN_HEIGHT/2));
+      segment2.push(point[0] );
+      segment2.push(point[1] );
+      shiftedSegment.push(point[0] - playerX);
+      shiftedSegment.push(point[1] - playerY);
     }
     
-    hiddenSpaces.poly(segment2).cut();
+    vision.poly(segment2).cut() //.fill({ color: 0x000000, alpha: 0.5 });
+    shiftedVision.poly(shiftedSegment).fill({ color: 0xff0000, alpha: 0.5 });
     const darkenLayer2 = new Graphics().rect(-this.shiftEdges, -this.shiftEdges, this.SCREEN_WIDTH + 2* this.shiftEdges, this.SCREEN_HEIGHT+ 2*this.shiftEdges).fill({ color: 0x000000, alpha: 0.5});
-    darkenLayer2.mask = hiddenSpaces;
+    
+    // darkenLayer2.mask = hiddenSpaces;
+    // darkenLayer2.addChild(darkenLayerInside);
+    // darkenLayer2.mask = darkenLayerInside;
 
     if (visionContainer.children.length > 0) {
       visionContainer.removeChildAt(visionContainer.children.length - 1);
     }
-    visionContainer.addChild(darkenLayer2);
+    if(this.shadowLayer.children.length > 1){
+      this.shadowLayer.removeChildAt(this.shadowLayer.children.length - 1);
+    }
+    // this.shadowLayer.addChild(hiddenSpaces);
+    this.shadowLayer = shiftedVision;
+    // visionContainer.addChild(darkenLayer2);
+    visionContainer.addChild(vision);
   }
 
   private renderFunction(hiddenContainer: Container, visionContainer: Container, posX: any, posY: any) {
@@ -211,17 +235,21 @@ export class GameManager {
   private setupVisionLayers(){
 
     this.hiddenContainer.zIndex = MAP_BOTTOM_Y + 10;
-    this.app.stage.addChild(this.hiddenContainer);
+    this.darklayerContainer.zIndex = MAP_BOTTOM_Y + 10;
+    this.darklayerContainer.removeChildren();
+    this.darklayerContainer.addChild(this.hiddenContainer);
+    // this.darklayerContainer.removeChildren();
 
     let visionMask = new Graphics().circle(this.app.screen.width / 2, this.app.screen.height / 2, this.radius).fill({ color: 0xff0000, alpha: 0.5 });
     this.visionContainer.mask = visionMask;
     this.visionContainer.zIndex = MAP_BOTTOM_Y + 10;
 
-    this.camera.container.addChild(this.obstacleContainer);
-    this.camera.container.addChild(this.visionContainer);
+    this.visionLayerContainer.zIndex = MAP_BOTTOM_Y + 10;
+    this.visionLayerContainer.removeChildren();
+    this.visionLayerContainer.addChild(this.visionContainer);
+    this.visionLayerContainer.addChild(this.obstacleContainer);
 
     const darkenLayer = new Graphics().rect(0, 0, this.app.screen.width + 0, this.app.screen.height + 0).fill({ color: 0x000000, alpha: 0.5 });
-
     this.hiddenContainer.addChild(darkenLayer);
 
     const maskDarkLayer = new Graphics()
@@ -230,24 +258,27 @@ export class GameManager {
       .circle(this.app.screen.width / 2 + 0, this.app.screen.height / 2 + 0, this.radius)
       .cut();
 
-    const blurDarkLayer = new BlurFilter({
-      kernelSize: 9,
-      quality: 64,
-      strength: 64,
-    });
-    blurDarkLayer.repeatEdgePixels = false;
+    // const blurDarkLayer = new BlurFilter({
+    //   kernelSize: 9,
+    //   quality: 64,
+    //   strength: 64,
+    // });
+    // blurDarkLayer.repeatEdgePixels = false;
 
     // maskDarkLayer.filters = [blurDarkLayer];
 
-    const bounds = new Rectangle(0, 0, this.app.screen.width, this.app.screen.height);
-    const texture = this.app.renderer.generateTexture({
-      target: maskDarkLayer,
-      resolution: 1,
-      frame: bounds,
-    });
+    // const bounds = new Rectangle(0, 0, this.app.screen.width, this.app.screen.height);
+    // const texture = this.app.renderer.generateTexture({
+    //   target: maskDarkLayer,
+    //   resolution: 1,
+    //   frame: bounds,
+    // });
 
-    const focusDarkLayer = new Sprite(texture);
-    darkenLayer.mask = focusDarkLayer;
+    // const focusDarkLayer = new Sprite(texture);
+    // this.shadowLayer.addChild(maskDarkLayer);
+    // this.shadowLayer = maskDarkLayer;
+    // this.shadowLayer = visionMask;
+    darkenLayer.mask = maskDarkLayer;
 
   }
 
@@ -298,6 +329,8 @@ export class GameManager {
 
     this.app.stage.addChild(this.uiContainer);
     this.app.stage.addChild(this.overlayContainer);
+    this.app.stage.addChild(this.darklayerContainer);
+    this.camera.container.addChild(this.visionLayerContainer);
   }
 
   registerListeners() {
@@ -323,6 +356,7 @@ export class GameManager {
       this.local_player = newPlayer;
       this.camera.follow(newPlayer);
     } else {
+      newPlayer.setMask(this.shadowLayer);
       player.listen("position", (value: any, previousValue: number[]) => {
         newPlayer.setCachedPositionX(value.x);
         newPlayer.setCachedPositionY(value.y);
@@ -371,8 +405,15 @@ export class GameManager {
 
       if (player.sessionId !== this.local_player?.sessionId) {
         player.interpolate(0.25);
+        player.setMask(this.shadowLayer);
       }
     });
+
+    if(this.app.screen.width !== this.SCREEN_WIDTH || this.app.screen.height !== this.SCREEN_HEIGHT){
+      // this.SCREEN_WIDTH = this.app.screen.width;
+      // this.SCREEN_HEIGHT = this.app.screen.height;
+      // this.setupVisionLayers();
+    }
 
 
     // for every Key values change player position

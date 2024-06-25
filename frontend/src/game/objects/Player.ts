@@ -1,7 +1,8 @@
 import { ColorReplaceFilter } from "pixi-filters";
-import { Point } from "pixi.js";
+import { Graphics, Point } from "pixi.js";
 import { MessageDataPlayer } from "../online/MessageDataPlayer";
 import { Entity } from "./Entity";
+import { Container } from "pixi.js";
 
 export class Player extends Entity {
 
@@ -22,6 +23,11 @@ export class Player extends Entity {
 
     // change player color
     this.changeColor(color);
+  }
+
+  setMask(mask: Container | Graphics) {
+    this.sprite.mask = mask;
+    this.anim.mask = mask;
   }
 
   private changeColor(color: number) {
