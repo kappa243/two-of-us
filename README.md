@@ -15,14 +15,14 @@ Node.js\
 installed Node.js and npm
 ### Installation:
 in directory frontend/ run command:\
-> npm install\
+`npm install`\
 in directory backend/ run command:\
-> npm install
+`npm install`
 ### Run:
 in directory frontend/ run command:\
-> npm run dev\
+`npm run dev`\
 in directory backend/ run command:\
-> npm start
+`npm start`
 ### Open:
 open address:\
 http://localhost:3000/
