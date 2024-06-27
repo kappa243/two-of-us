@@ -82,7 +82,8 @@ function saveCoordinatesToFile() {
     let coordinatesText = "";
 
     walls.forEach((wall) => {
-        coordinatesText += `new Wall(new Point(${wall[0].x - canvas.width / 2}, ${wall[0].y - canvas.height / 2}), new Point(${wall[1].x - canvas.width / 2}, ${wall[1].y - canvas.height / 2})),\n`;
+        // coordinatesText += `new Wall(new Point(${wall[0].x - canvas.width / 2}, ${wall[0].y - canvas.height / 2}), new Point(${wall[1].x - canvas.width / 2}, ${wall[1].y - canvas.height / 2})),\n`;
+        coordinatesText += `[${wall[0].x - canvas.width / 2}, ${wall[0].y - canvas.height / 2}, ${wall[1].x - canvas.width / 2}, ${wall[1].y - canvas.height / 2}],\n`;
     });
 
     const element = document.createElement('a');
